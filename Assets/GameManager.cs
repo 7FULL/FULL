@@ -29,7 +29,6 @@ public class GameManager : MonoBehaviourPunCallbacks
         
         
         
-
         private void Awake()
         {
 	        PhotonNetwork.ConnectUsingSettings();
@@ -52,6 +51,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
 		{
+			Debug.LogError("Joining room "+ scene.name);
 			JoinRoom(scene.name);
 		} 
         

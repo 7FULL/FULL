@@ -6,9 +6,14 @@ using KinematicCharacterController.Examples;
 using Photon.Pun;
 using Photon.Pun.Demo.PunBasics;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class Player : Entity
 {
+    private int _id = 2;
+    
+    public int ID => _id;
+    
     [SerializeField]
     private ExampleCharacterController Character;
     
@@ -28,6 +33,11 @@ public class Player : Entity
 
     public PhotonView PV => _pv;
     
+    [Tooltip("The name our player will have in the inspectior to identify it")]
+    [InspectorName("Player Name")]
+    [SerializeField]
+    private string _playerName = "Our Player";
+    
     [InspectorName("Smooth Blend Transition")]
     [SerializeField]
     private float _smoothBlendTransition = 0.3f;
@@ -35,6 +45,10 @@ public class Player : Entity
     [InspectorName("Call Canvas")] 
     [SerializeField]
     private GameObject _receiveCallCanvas;
+    
+    [InspectorName("OnGoingCall Canvas")] 
+    [SerializeField]
+    private GameObject _onGoingCanvas;
     
     private ReceiveCallMenu _receiveCallMenu;
 
@@ -60,6 +74,9 @@ public class Player : Entity
             // Movement and pyhsics
             Character.enabled = false;
             CharacterCamera.enabled = false;
+            
+            // Whe desactivate the sound source of the player child 
+            //GetComponentInChildren<AudioSource>().enabled = false;
         }
         else
         {
@@ -67,9 +84,21 @@ public class Player : Entity
             gameObject.layer = 3;
             
             Character.MeshRoot.transform.GetChild(0).transform.GetChild(0).gameObject.layer = 3;
+
+            // We get the menu
+            _receiveCallMenu = _receiveCallCanvas.GetComponent<ReceiveCallMenu>();
             
-            // TODO: REGISTER ALL MENUS
-            MenuManager.Instance.RegisterMenu(new MenuStruct(_receiveCallCanvas, Menu.RECEIVE_CALL));
+            // We register the menus
+            MenuManager.Instance.RegisterMenu(_receiveCallCanvas, Menu.RECEIVE_CALL);
+            MenuManager.Instance.RegisterMenu(_onGoingCanvas, Menu.CALL);
+            
+            // We change the name of the player
+            gameObject.name = _playerName;
+            
+            //TODO: Retrieve the id from the database
+            int x = Random.Range(1, 1000000);
+            
+            _pv.RPC("UpdateIDRPC", RpcTarget.AllBuffered, x);
         }
     }
 
@@ -78,8 +107,21 @@ public class Player : Entity
         if (!_pv.IsMine) return;
 
         HandleCharacterInput();
+        
+        TestCall();
+        
+        HandleCallCanvas();
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            // Free mouse
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
     }
 
+    #region Controller Input Handling
+    
     private void LateUpdate()
     {
         if (!_pv.IsMine) return;
@@ -145,17 +187,59 @@ public class Player : Entity
         animator.SetFloat("x", characterInputs.MoveAxisForward, _smoothBlendTransition, Time.deltaTime);
         animator.SetFloat("y", characterInputs.MoveAxisRight, _smoothBlendTransition, Time.deltaTime);
     }
+    
+    #endregion
+    
+    private void TestCall()
+    {
+        if (Input.GetKeyDown(KeyCode.U))
+        {
+            //We obtain the photonView of the other player
+            Player other = GameObject.Find("Player(Clone)").GetComponent<Player>();
 
+            //TODO: Send the id of the player from database
+            SocialManager.Instance.Call(other);
+        }
+    }
+
+    private void HandleCallCanvas()
+    {
+        if (SocialManager.Instance.IsBeingCalled)
+        {
+            if (Input.GetKeyDown(KeyCode.Y))
+            {
+                SocialManager.Instance.AcceptCall();
+            }
+            else if (Input.GetKeyDown(KeyCode.N))
+            {
+                _receiveCallMenu.CloseAnimation();
+            }
+        }
+    }
+    
+    [PunRPC]
+    private void CallRPC(int callerID, string channelName)
+    {
+        SocialManager.Instance.ReceiveCall(callerID, channelName);
+    }
+    
+    [PunRPC]
+    public void AcceptCallRPC()
+    {
+        SocialManager.Instance.JoinCall();
+    }
+    
+    [PunRPC]
+    private void UpdateIDRPC(int id)
+    {
+        _id = id;
+    }
+    
     public override void Die()
     {
         RestorePlayer();
         
         GameManager.Instance.JoinRoom(Rooms.LOBBY);
-    }
-
-    public void SetCallInfo()
-    {
-        
     }
 
     private void RestorePlayer()

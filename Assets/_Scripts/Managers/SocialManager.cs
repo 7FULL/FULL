@@ -4,23 +4,36 @@ using System.Collections.Generic;
 using Agora.Rtc;
 using Photon.Pun;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class SocialManager : MonoBehaviour
 {
 
-    private string _appID = "666729d18268402bb2f5f3ad40601c49";
+    private string _agoraAppID = "666729d18268402bb2f5f3ad40601c49";
     
     private string _photonAppID = "e11858fa-121d-49c0-906f-665c53c4e2f6";
-    
+
     // Singleton
     private static SocialManager _instance;
     
+    public static SocialManager Instance => _instance;
+    
     private IRtcEngine _rtcEngine;
-
-    public IRtcEngine RtcEngine
-    {
-        get => _rtcEngine;
-    }
+    
+    private string _channelName = null;
+    
+    private Contact _contact;
+    
+    public Contact Contact => _contact;
+    
+    public bool IsOnCall => _channelName != null;
+    public bool IsBeingCalled => _contact != null;
+    public bool IsAvailable => _channelName == null && _contact == null;
+    
+    public string ChannelName => _channelName;
+    
+    // In seconds
+    private int _callReponseTimeout = 10;
 
     private void Awake()
     {
@@ -40,7 +53,7 @@ public class SocialManager : MonoBehaviour
         _rtcEngine = Agora.Rtc.RtcEngine.CreateAgoraRtcEngineEx();
         UserEventHandler handler = new UserEventHandler(this);
             
-        RtcEngineContext context = new RtcEngineContext(_appID, 0,
+        RtcEngineContext context = new RtcEngineContext(_agoraAppID, 0,
             CHANNEL_PROFILE_TYPE.CHANNEL_PROFILE_LIVE_BROADCASTING,
             AUDIO_SCENARIO_TYPE.AUDIO_SCENARIO_GAME_STREAMING);
         _rtcEngine.Initialize(context);
@@ -53,23 +66,137 @@ public class SocialManager : MonoBehaviour
         
     }
 
-    public void VoiceCall(PhotonView other)
+    //TODO: Menu to wait for response from the other player
+    
+    public void Call(Player playerToCall)
     {
-        GameManager.Instance.Player.PV.RPC("ReceiveCall", other.Controller);
+        PhotonView caller = null;
+
+        int id = playerToCall.ID;
+        
+        foreach (Player player in GameObject.FindObjectsOfType<Player>())
+        {
+            if (player.ID == id)
+            {
+                caller = player.PV;
+            }
+        }
+        
+        if (caller == null)
+        {
+            Debug.Log("Player not found");
+            return;
+        }
+
+        _contact = new Contact(caller, "Pepito");
+        
+        string channelName = GameManager.Instance.Player.PV.Controller.ActorNumber + "-" + PhotonNetwork.LocalPlayer.ActorNumber + Random.Range(1, 1000);
+
+        StartCoroutine(CallTimeOut());
+        
+        //TODO: Open menu of calling someone
+
+        GameManager.Instance.Player.PV.RPC("CallRPC", caller.Controller, GameManager.Instance.Player.ID, channelName);
     }
 
-    [PunRPC]
-    private void ReceiveCall()
+    IEnumerator CallTimeOut()
     {
+        yield return new WaitForSecondsRealtime(_callReponseTimeout);
+        
+        RestartCallInfo();
+        
+        MenuManager.Instance.CloseMenu();
+    }
+
+    private void RestartCallInfo()
+    {
+        _contact = null;
+        _channelName = null;
+    }
+
+    public void ReceiveCall(int callerID, string channelName)
+    {
+        PhotonView caller = null;
+        
+        foreach (Player player in GameObject.FindObjectsOfType<Player>())
+        {
+            if (player.ID == callerID)
+            {
+                caller = player.PV;
+            }
+        }
+        
+        Debug.Log(callerID);
+
+        //TODO: Get the name of the caller from the contacts list
+        
+         _contact = new Contact(caller, "Pepito");
+         
+         Debug.Log(_contact);
+         
+         _channelName = channelName;
+         
+         MenuStruct menuStruct = MenuManager.Instance.GetMenu(Menu.RECEIVE_CALL);
+
+         if (menuStruct.MenuType == Menu.NONE)
+         {
+             Debug.Log("Menu Receive Call not found");
+             return;
+         }
+        
+        menuStruct.Menu.GetComponent<ReceiveCallMenu>().Configure();
+        
         MenuManager.Instance.OpenMenu(Menu.RECEIVE_CALL);
+    }
+    
+    public void AcceptCall()
+    {
+        JoinCall();
+        
+        GameManager.Instance.Player.PV
+            .RPC("AcceptCallRPC", _contact.PV.Controller);
+    }
+
+    public void JoinCall()
+    {
+        MenuStruct menuStruct = MenuManager.Instance.GetMenu(Menu.CALL);
+        
+        if (menuStruct.MenuType == Menu.NONE)
+        {
+            Debug.Log("Menu Receive Call not found");
+            return;
+        }
+        
+        StopCoroutine(CallTimeOut());
+        
+        menuStruct.Menu.GetComponent<OnGoingCallMenu>().Configure();
+        
+        MenuManager.Instance.OpenMenu(Menu.CALL);
+            
+        _rtcEngine.JoinChannel("", _channelName);
+    }
+
+    public void EndCall()
+    {
+        GameManager.Instance.Player.PV.RPC("EndCallRPC", RpcTarget.Others);
+        
+        MenuManager.Instance.CloseMenu();
+        
+        _rtcEngine.LeaveChannel();
+    }
+    
+    [PunRPC]
+    private void EndCallRPC()
+    {
+        _rtcEngine.LeaveChannel();
     }
     
     private void OnDestroy()
     {
-        if (RtcEngine == null) return;
-        RtcEngine.InitEventHandler(null);
-        RtcEngine.LeaveChannel();
-        RtcEngine.Dispose();
+        if (_rtcEngine == null) return;
+        _rtcEngine.InitEventHandler(null);
+        _rtcEngine.LeaveChannel();
+        _rtcEngine.Dispose();
     }
 }
 

@@ -3,5 +3,6 @@
     NONE,
     RECONNECT,
     INVENTORY,
-    RECEIVE_CALL
+    RECEIVE_CALL,
+    CALL,
 }

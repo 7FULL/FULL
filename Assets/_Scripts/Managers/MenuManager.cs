@@ -44,7 +44,19 @@ public class MenuManager: MonoBehaviour
             }
             else
             {
-                menuStruct.Menu.SetActive(false);
+                if (menuStruct.MenuType != Menu.NONE)
+                {
+                    MenuUtils iMenu = menuStruct.Menu.GetComponent<MenuUtils>();
+                    
+                    if (iMenu == null || !iMenu.HasAnimation)
+                    {
+                        menuStruct.Menu.SetActive(false);
+                    }
+                    else
+                    {
+                        iMenu.CloseAnimation();
+                    }
+                }
             }
         }
     }
@@ -125,6 +137,19 @@ public class MenuManager: MonoBehaviour
         
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+    }
+    
+    public MenuStruct GetMenu(Menu menu)
+    {
+        foreach (MenuStruct menuStruct in _menus)
+        {
+            if (menuStruct.MenuType == menu)
+            {
+               return menuStruct;
+            }
+        }
+        
+        return new MenuStruct(null, Menu.NONE);
     }
 }
 
