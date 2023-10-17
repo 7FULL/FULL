@@ -50,7 +50,9 @@ public class Player : Entity
     [SerializeField]
     private GameObject _onGoingCanvas;
     
-    private ReceiveCallMenu _receiveCallMenu;
+    [InspectorName("Calling Canvas")]
+    [SerializeField]
+    private GameObject _callingCanvas;
 
     private void Start()
     {
@@ -85,12 +87,10 @@ public class Player : Entity
             
             Character.MeshRoot.transform.GetChild(0).transform.GetChild(0).gameObject.layer = 3;
 
-            // We get the menu
-            _receiveCallMenu = _receiveCallCanvas.GetComponent<ReceiveCallMenu>();
-            
             // We register the menus
-            MenuManager.Instance.RegisterMenu(_receiveCallCanvas, Menu.RECEIVE_CALL);
-            MenuManager.Instance.RegisterMenu(_onGoingCanvas, Menu.CALL);
+            MenuManager.Instance.RegisterMenu(_receiveCallCanvas, Menu.RECEIVE_CALL, _receiveCallCanvas.GetComponent<ReceiveCallMenu>());
+            MenuManager.Instance.RegisterMenu(_onGoingCanvas, Menu.CALL, _onGoingCanvas.GetComponent<OnGoingCallMenu>());
+            MenuManager.Instance.RegisterMenu(_callingCanvas, Menu.CALLING, _callingCanvas.GetComponent<OnGoingCallMenu>());
             
             // We change the name of the player
             gameObject.name = _playerName;
@@ -212,7 +212,16 @@ public class Player : Entity
             }
             else if (Input.GetKeyDown(KeyCode.N))
             {
-                _receiveCallMenu.CloseAnimation();
+                MenuManager.Instance.CloseMenu();
+                SocialManager.Instance.Clean();
+            }
+        }
+
+        if (SocialManager.Instance.IsOnCall)
+        {
+            if (Input.GetKeyDown(KeyCode.L))
+            {
+                SocialManager.Instance.LeaveCall();
             }
         }
     }
@@ -227,6 +236,12 @@ public class Player : Entity
     public void AcceptCallRPC()
     {
         SocialManager.Instance.JoinCall();
+    }
+    
+    [PunRPC]
+    public void LeaveCallRPC()
+    {
+        SocialManager.Instance.EndCall();
     }
     
     [PunRPC]

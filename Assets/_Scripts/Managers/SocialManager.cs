@@ -26,14 +26,16 @@ public class SocialManager : MonoBehaviour
     
     public Contact Contact => _contact;
     
-    public bool IsOnCall => _channelName != null;
+    private bool _isOnCall = false;
+    
+    public bool IsOnCall => _isOnCall;
     public bool IsBeingCalled => _contact != null;
     public bool IsAvailable => _channelName == null && _contact == null;
     
     public string ChannelName => _channelName;
     
     // In seconds
-    private int _callReponseTimeout = 10;
+    private int _callReponseTimeout = 15;
 
     private void Awake()
     {
@@ -66,8 +68,6 @@ public class SocialManager : MonoBehaviour
         
     }
 
-    //TODO: Menu to wait for response from the other player
-    
     public void Call(Player playerToCall)
     {
         PhotonView caller = null;
@@ -93,25 +93,36 @@ public class SocialManager : MonoBehaviour
         string channelName = GameManager.Instance.Player.PV.Controller.ActorNumber + "-" + PhotonNetwork.LocalPlayer.ActorNumber + Random.Range(1, 1000);
 
         StartCoroutine(CallTimeOut());
+        OnGoingCallMenu x = (OnGoingCallMenu)MenuManager.Instance.GetMenu(Menu.CALLING).Menu;
         
-        //TODO: Open menu of calling someone
+        x.Configure();
+
+        MenuManager.Instance.OpenMenu(Menu.CALLING);
 
         GameManager.Instance.Player.PV.RPC("CallRPC", caller.Controller, GameManager.Instance.Player.ID, channelName);
     }
 
-    IEnumerator CallTimeOut()
+    IEnumerator CallTimeOut(int seconds = 0)
     {
-        yield return new WaitForSecondsRealtime(_callReponseTimeout);
-        
-        RestartCallInfo();
+        if (seconds != 0)
+        {
+            yield return new WaitForSecondsRealtime(seconds);
+        }
+        else
+        {
+            yield return new WaitForSecondsRealtime(_callReponseTimeout);
+        }
+
+        Clean();
         
         MenuManager.Instance.CloseMenu();
     }
 
-    private void RestartCallInfo()
+    public void Clean()
     {
         _contact = null;
         _channelName = null;
+        _isOnCall = false;
     }
 
     public void ReceiveCall(int callerID, string channelName)
@@ -125,70 +136,85 @@ public class SocialManager : MonoBehaviour
                 caller = player.PV;
             }
         }
-        
-        Debug.Log(callerID);
 
         //TODO: Get the name of the caller from the contacts list
         
-         _contact = new Contact(caller, "Pepito");
-         
-         Debug.Log(_contact);
-         
-         _channelName = channelName;
-         
-         MenuStruct menuStruct = MenuManager.Instance.GetMenu(Menu.RECEIVE_CALL);
+        _contact = new Contact(caller, "Pepito");
 
-         if (menuStruct.MenuType == Menu.NONE)
-         {
-             Debug.Log("Menu Receive Call not found");
-             return;
-         }
+        _channelName = channelName;
+         
+        MenuStruct menuStruct = MenuManager.Instance.GetMenu(Menu.RECEIVE_CALL);
+
+        if (menuStruct.MenuType == Menu.NONE)
+        {
+            Debug.Log("MenuGameObject Receive Call not found");
+            return;
+        }
+
+        ReceiveCallMenu menu = (ReceiveCallMenu)menuStruct.Menu;
         
-        menuStruct.Menu.GetComponent<ReceiveCallMenu>().Configure();
+        menu.Configure();
         
         MenuManager.Instance.OpenMenu(Menu.RECEIVE_CALL);
+        
+        StartCoroutine(CallTimeOut(13));
     }
     
     public void AcceptCall()
     {
         JoinCall();
         
-        GameManager.Instance.Player.PV
-            .RPC("AcceptCallRPC", _contact.PV.Controller);
+        GameManager.Instance.Player.PV.RPC("AcceptCallRPC", _contact.PV.Controller);
     }
 
     public void JoinCall()
     {
+        if (_contact == null)
+        {
+            Debug.Log("Contact not found");
+            return;
+        }
+        
         MenuStruct menuStruct = MenuManager.Instance.GetMenu(Menu.CALL);
         
         if (menuStruct.MenuType == Menu.NONE)
         {
-            Debug.Log("Menu Receive Call not found");
+            Debug.Log("MenuGameObject Receive Call not found");
             return;
         }
         
-        StopCoroutine(CallTimeOut());
-        
-        menuStruct.Menu.GetComponent<OnGoingCallMenu>().Configure();
+        OnGoingCallMenu menu = (OnGoingCallMenu)menuStruct.Menu;
+
+        menu.Configure();
         
         MenuManager.Instance.OpenMenu(Menu.CALL);
+        
+        _isOnCall = true;
             
         _rtcEngine.JoinChannel("", _channelName);
+        
+        MenuManager.Instance.Focus();
+    }
+
+    public void LeaveCall()
+    {
+        GameManager.Instance.Player.PV.RPC("LeaveCallRPC", _contact.PV.Controller);
+        EndCall();
     }
 
     public void EndCall()
     {
-        GameManager.Instance.Player.PV.RPC("EndCallRPC", RpcTarget.Others);
+        if (_contact == null)
+        {
+            Debug.Log("Contact not found");
+            return;
+        }
         
         MenuManager.Instance.CloseMenu();
-        
+
         _rtcEngine.LeaveChannel();
-    }
-    
-    [PunRPC]
-    private void EndCallRPC()
-    {
-        _rtcEngine.LeaveChannel();
+
+        Clean();
     }
     
     private void OnDestroy()

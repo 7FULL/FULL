@@ -26,11 +26,11 @@ public class MenuManager: MonoBehaviour
         {
             if (menuStruct.MenuType == menu)
             {
-                MenuUtils iMenu = menuStruct.Menu.GetComponent<MenuUtils>();
+                MenuUtils iMenu = menuStruct.MenuGameObject.GetComponent<MenuUtils>();
                 
                 if (iMenu == null || !iMenu.HasAnimation)
                 {
-                    menuStruct.Menu.SetActive(true);
+                    menuStruct.MenuGameObject.SetActive(true);
                 }
                 else
                 {
@@ -46,11 +46,11 @@ public class MenuManager: MonoBehaviour
             {
                 if (menuStruct.MenuType != Menu.NONE)
                 {
-                    MenuUtils iMenu = menuStruct.Menu.GetComponent<MenuUtils>();
+                    MenuUtils iMenu = menuStruct.MenuGameObject.GetComponent<MenuUtils>();
                     
                     if (iMenu == null || !iMenu.HasAnimation)
                     {
-                        menuStruct.Menu.SetActive(false);
+                        menuStruct.MenuGameObject.SetActive(false);
                     }
                     else
                     {
@@ -63,8 +63,8 @@ public class MenuManager: MonoBehaviour
 
     private void Update()
     {
-        // If ther is no menu and player clicks the mouse button, focus cursor on the game
-        if (_currentMenu.Menu != null && !_currentMenu.Menu.activeSelf && Input.GetMouseButtonDown(0))
+        // If ther is no menuGameObject and player clicks the mouse button, focus cursor on the game
+        if (_currentMenu.MenuGameObject != null && !_currentMenu.MenuGameObject.activeSelf && Input.GetMouseButtonDown(0))
         {
             ToGame();
         }
@@ -72,20 +72,20 @@ public class MenuManager: MonoBehaviour
 
     public void CloseMenu()
     {
-        if (_currentMenu.Menu != null)
+        if (_currentMenu.MenuGameObject != null)
         {
-            MenuUtils iMenu = _currentMenu.Menu.GetComponent<MenuUtils>();
+            MenuUtils iMenu = _currentMenu.MenuGameObject.GetComponent<MenuUtils>();
             
             if (iMenu == null || !iMenu.HasAnimation)
             {
-                _currentMenu.Menu.SetActive(false);
+                _currentMenu.MenuGameObject.SetActive(false);
             }
             else
             {
                 iMenu.CloseAnimation();
             }
             
-            _currentMenu = new MenuStruct(null, Menu.NONE);
+            _currentMenu = new MenuStruct(null, Menu.NONE, null);
             
             // Free the mouse
             Cursor.lockState = CursorLockMode.None;
@@ -98,9 +98,9 @@ public class MenuManager: MonoBehaviour
         _menus.Add(menuStruct);
     }
     
-    public void RegisterMenu(GameObject menu, Menu menuType)
+    public void RegisterMenu(GameObject menu, Menu menuType, MenuUtils menuUtils)
     {
-        _menus.Add(new MenuStruct(menu, menuType));
+        _menus.Add(new MenuStruct(menu, menuType, menuUtils));
     }
     
     public void RegisterMenu(MenuStruct[] menuStructs)
@@ -120,11 +120,11 @@ public class MenuManager: MonoBehaviour
         {
             if (menuStruct.MenuType != Menu.NONE)
             {
-                MenuUtils iMenu = menuStruct.Menu.GetComponent<MenuUtils>();
+                MenuUtils iMenu = menuStruct.MenuGameObject.GetComponent<MenuUtils>();
                 
                 if (iMenu == null || !iMenu.HasAnimation)
                 {
-                    menuStruct.Menu.SetActive(false);
+                    menuStruct.MenuGameObject.SetActive(false);
                 }
                 else
                 {
@@ -133,7 +133,7 @@ public class MenuManager: MonoBehaviour
             }
         }
         
-        _currentMenu = new MenuStruct(null, Menu.NONE);
+        _currentMenu = new MenuStruct(null, Menu.NONE, null);
         
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -149,29 +149,41 @@ public class MenuManager: MonoBehaviour
             }
         }
         
-        return new MenuStruct(null, Menu.NONE);
+        return new MenuStruct(null, Menu.NONE, null);
+    }
+
+    public void Focus()
+    {
+        // Focus mouse on the game
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 }
 
 [Serializable]
 public struct MenuStruct
 {
-    [Tooltip("The menu game object")]
-    [InspectorName("Menu")]
+    [Tooltip("The _menuGameObject game object")]
+    [InspectorName("MenuGameObject")]
     [SerializeField]
-    private GameObject _menu;
+    private GameObject _menuGameObject;
     
-    [Tooltip("The menu type")]
-    [InspectorName("Menu Type")]
+    [Tooltip("The _menuGameObject type")]
+    [InspectorName("MenuGameObject Type")]
     [SerializeField]
     private Menu _menuType;
     
-    public GameObject Menu => _menu;
+    public GameObject MenuGameObject => _menuGameObject;
     public Menu MenuType => _menuType;
     
-    public MenuStruct(GameObject menu, Menu menuType)
+    private MenuUtils _menuUtils;
+    
+    public MenuUtils Menu => _menuUtils;
+    
+    public MenuStruct(GameObject menuGameObject, Menu menuType, MenuUtils menuUtils)
     {
-        _menu = menu;
+        this._menuGameObject = menuGameObject;
         _menuType = menuType;
+        _menuUtils = menuUtils;
     }
 }
