@@ -53,6 +53,14 @@ public class Player : Entity
     [InspectorName("Calling Canvas")]
     [SerializeField]
     private GameObject _callingCanvas;
+    
+    [InspectorName("VideoCall Canvas")]
+    [SerializeField]
+    private GameObject _videoCallCanvas;
+    
+    [InspectorName("Video call camera")]
+    [SerializeField]
+    private Camera _videoCallCamera;
 
     private void Start()
     {
@@ -66,10 +74,12 @@ public class Player : Entity
         CharacterCamera.IgnoredColliders.AddRange(Character.GetComponentsInChildren<Collider>());
         
         _pv = GetComponent<PhotonView>();
+        
+        _videoCallCamera.enabled = false;
 
         if (!_pv.IsMine){
-            CharacterCamera.gameObject.GetComponent<Camera>().enabled = false;  
-            
+            CharacterCamera.gameObject.GetComponent<Camera>().enabled = false;
+
             // Listener
             CharacterCamera.gameObject.GetComponent<AudioListener>().enabled = false;
             
@@ -84,6 +94,8 @@ public class Player : Entity
         {
             // We change all the layers to Player
             gameObject.layer = 3;
+
+            _videoCallCamera.Reset();
             
             Character.MeshRoot.transform.GetChild(0).transform.GetChild(0).gameObject.layer = 3;
 
@@ -91,6 +103,7 @@ public class Player : Entity
             MenuManager.Instance.RegisterMenu(_receiveCallCanvas, Menu.RECEIVE_CALL, _receiveCallCanvas.GetComponent<ReceiveCallMenu>());
             MenuManager.Instance.RegisterMenu(_onGoingCanvas, Menu.CALL, _onGoingCanvas.GetComponent<OnGoingCallMenu>());
             MenuManager.Instance.RegisterMenu(_callingCanvas, Menu.CALLING, _callingCanvas.GetComponent<OnGoingCallMenu>());
+            MenuManager.Instance.RegisterMenu(_videoCallCanvas, Menu.VIDEO_CALL, _videoCallCanvas.GetComponent<OnGoingCallMenu>());
             
             // We change the name of the player
             gameObject.name = _playerName;
@@ -198,7 +211,7 @@ public class Player : Entity
             Player other = GameObject.Find("Player(Clone)").GetComponent<Player>();
 
             //TODO: Send the id of the player from database
-            SocialManager.Instance.Call(other);
+            SocialManager.Instance.Call(other, true);
         }
     }
 
@@ -227,9 +240,9 @@ public class Player : Entity
     }
     
     [PunRPC]
-    private void CallRPC(int callerID, string channelName)
+    private void CallRPC(int callerID, string channelName, bool videoCall)
     {
-        SocialManager.Instance.ReceiveCall(callerID, channelName);
+        SocialManager.Instance.ReceiveCall(callerID, channelName, videoCall);
     }
     
     [PunRPC]
@@ -248,6 +261,16 @@ public class Player : Entity
     private void UpdateIDRPC(int id)
     {
         _id = id;
+    }
+    
+    public void EnableVideo()
+    {
+        _videoCallCamera.enabled = true;
+    }
+    
+    public void DisableVideo()
+    {
+        _videoCallCamera.enabled = false;
     }
     
     public override void Die()

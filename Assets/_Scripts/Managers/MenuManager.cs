@@ -20,7 +20,7 @@ public class MenuManager: MonoBehaviour
         }
     }
     
-    public void OpenMenu(Menu menu)
+    public void OpenMenu(Menu menu, bool mouseFocus = false)
     {
         foreach (MenuStruct menuStruct in _menus)
         {
@@ -39,8 +39,11 @@ public class MenuManager: MonoBehaviour
                 _currentMenu = menuStruct;
                 
                 // Free the mouse
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
+                if (!mouseFocus)
+                {
+                    Cursor.lockState = CursorLockMode.None;
+                    Cursor.visible = true;
+                }
             }
             else
             {

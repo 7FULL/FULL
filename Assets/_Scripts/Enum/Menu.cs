@@ -6,4 +6,5 @@
     RECEIVE_CALL,
     CALL,
     CALLING,
+    VIDEO_CALL,
 }

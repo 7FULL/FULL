@@ -28,6 +28,8 @@ public class SocialManager : MonoBehaviour
     
     private bool _isOnCall = false;
     
+    private bool _isVideoCall = false;
+    
     public bool IsOnCall => _isOnCall;
     public bool IsBeingCalled => _contact != null;
     public bool IsAvailable => _channelName == null && _contact == null;
@@ -68,7 +70,7 @@ public class SocialManager : MonoBehaviour
         
     }
 
-    public void Call(Player playerToCall)
+    public void Call(Player playerToCall, bool videoCall = false)
     {
         PhotonView caller = null;
 
@@ -97,9 +99,11 @@ public class SocialManager : MonoBehaviour
         
         x.Configure();
 
-        MenuManager.Instance.OpenMenu(Menu.CALLING);
+        MenuManager.Instance.OpenMenu(Menu.CALLING, true);
 
-        GameManager.Instance.Player.PV.RPC("CallRPC", caller.Controller, GameManager.Instance.Player.ID, channelName);
+        GameManager.Instance.Player.PV.RPC("CallRPC", caller.Controller, GameManager.Instance.Player.ID, channelName, videoCall);
+        
+        _isVideoCall = videoCall;
     }
 
     IEnumerator CallTimeOut(int seconds = 0)
@@ -115,17 +119,25 @@ public class SocialManager : MonoBehaviour
 
         Clean();
         
+        Debug.Log("Player didn't answer the call");
+        
         MenuManager.Instance.CloseMenu();
     }
 
     public void Clean()
     {
+        if (_isVideoCall)
+        {
+            _contact.PV.gameObject.GetComponent<Player>().DisableVideo();
+        }
+        
         _contact = null;
         _channelName = null;
         _isOnCall = false;
+        _isVideoCall = false;
     }
 
-    public void ReceiveCall(int callerID, string channelName)
+    public void ReceiveCall(int callerID, string channelName, bool videoCall)
     {
         PhotonView caller = null;
         
@@ -142,6 +154,8 @@ public class SocialManager : MonoBehaviour
         _contact = new Contact(caller, "Pepito");
 
         _channelName = channelName;
+        
+        _isVideoCall = videoCall;
          
         MenuStruct menuStruct = MenuManager.Instance.GetMenu(Menu.RECEIVE_CALL);
 
@@ -155,7 +169,7 @@ public class SocialManager : MonoBehaviour
         
         menu.Configure();
         
-        MenuManager.Instance.OpenMenu(Menu.RECEIVE_CALL);
+        MenuManager.Instance.OpenMenu(Menu.RECEIVE_CALL, true);
         
         StartCoroutine(CallTimeOut(13));
     }
@@ -163,7 +177,7 @@ public class SocialManager : MonoBehaviour
     public void AcceptCall()
     {
         JoinCall();
-        
+
         GameManager.Instance.Player.PV.RPC("AcceptCallRPC", _contact.PV.Controller);
     }
 
@@ -175,7 +189,23 @@ public class SocialManager : MonoBehaviour
             return;
         }
         
-        MenuStruct menuStruct = MenuManager.Instance.GetMenu(Menu.CALL);
+        if (_isVideoCall)
+        {
+            _contact.PV.gameObject.GetComponent<Player>().EnableVideo();
+        }
+        
+        StopAllCoroutines();
+
+        MenuStruct menuStruct;
+        
+        if (_isVideoCall)
+        {
+            menuStruct = MenuManager.Instance.GetMenu(Menu.VIDEO_CALL);
+        }
+        else
+        {
+            menuStruct = MenuManager.Instance.GetMenu(Menu.CALL);
+        }
         
         if (menuStruct.MenuType == Menu.NONE)
         {
@@ -187,13 +217,18 @@ public class SocialManager : MonoBehaviour
 
         menu.Configure();
         
-        MenuManager.Instance.OpenMenu(Menu.CALL);
+        if(_isVideoCall)
+        {
+            MenuManager.Instance.OpenMenu(Menu.VIDEO_CALL, true);
+        }
+        else
+        {
+            MenuManager.Instance.OpenMenu(Menu.CALL, true);
+        }
         
         _isOnCall = true;
             
         _rtcEngine.JoinChannel("", _channelName);
-        
-        MenuManager.Instance.Focus();
     }
 
     public void LeaveCall()
