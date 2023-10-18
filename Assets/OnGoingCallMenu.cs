@@ -23,7 +23,9 @@ public class OnGoingCallMenu: MenuUtils
     
     public void Configure()
     {
+        //TODO: Add the contact name. Text doesnt update
         _contactName.text = SocialManager.Instance.Contact.Name;
+        Debug.Log(SocialManager.Instance.Contact);
     }
     
     public override void CloseAnimation()

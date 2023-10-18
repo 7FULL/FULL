@@ -70,6 +70,8 @@ public class Player : Entity
     private ApiClient api;
 
     private UserData userData;
+    
+    public Contact[] Contacts => userData.contacts;
 
     private void Start()
     {
@@ -122,20 +124,70 @@ public class Player : Entity
             gameObject.name = playerName;
         }
     }
+    
+    //TODO: RefreshContacts when opening social menu
+    public void RefreshContacts()
+    {
+        Contact[] contactsAux = userData.contacts;
+        
+        Player[] players = GameObject.FindObjectsOfType<Player>();
+
+        for (int i = 0; i < contactsAux.Length; i++)
+        {
+            foreach (Player player in players)
+            {
+                if (player.ID == contactsAux[i].ID)
+                {
+                    contactsAux[i].SetPV(player.PV);
+                }
+            }
+        }
+    }
 
     private async void GetUserInfo()
     {
-        string x = SystemInfo.deviceUniqueIdentifier;
-
-        String response = await api.Post("user", x);
-
-        userData = JsonUtility.FromJson<UserData>(response);
+        string uniqueIdentifier = SystemInfo.deviceUniqueIdentifier;
         
-        userData.Check();
+        uniqueIdentifier = "1";
         
-        //Debug.Log(userData);
+        /*
+        Contact contact = new Contact("Rodrigo", "2");
 
-        pv.RPC("UpdateIDRPC", RpcTarget.AllBuffered, x);
+        string json = "{";
+        json +=  "\"contact\":" + contact.ToJson() + ",";
+        json +=  "\"user\": \"" + uniqueIdentifier + "\"";
+        json += "}";
+
+        api.Post("contact", json);
+        */
+
+        string response = "";
+        
+        try
+        {
+            response = await api.Post("user", uniqueIdentifier);
+        }
+        catch (Exception e)
+        {
+            //TODO: Servers down menu
+            return;
+        }
+
+        userData = JsonUtility.FromJson<UserDataResponse>(response).ToUserData();
+
+        /*#region Just for development
+            uniqueIdentifier = Random.Range(0, 1000000).ToString();
+            // We find the other player
+            Player other = GameObject.Find("Player(Clone)").GetComponent<Player>();
+            
+            if (other != null)
+            {
+                // We add to contacts the other player
+                userData.AddContact(new Contact(other.PV, "Frederico", other.ID));
+            }
+        #endregion*/
+        
+        pv.RPC("UpdateIDRPC", RpcTarget.AllBuffered, uniqueIdentifier);
     }
 
     private void Update()
@@ -151,6 +203,11 @@ public class Player : Entity
         HandleVoidTP();
 
         HandleMouseFocus();
+
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            RefreshContacts();
+        }
     }
 
     #region Controller Input Handling
@@ -253,10 +310,7 @@ public class Player : Entity
     {
         if (Input.GetKeyDown(KeyCode.U))
         {
-            //We obtain the photonView of the other player
-            Player other = GameObject.Find("Player(Clone)").GetComponent<Player>();
-            
-            SocialManager.Instance.Call(other, true);
+            SocialManager.Instance.Call(userData.contacts[0], true);
         }
     }
 

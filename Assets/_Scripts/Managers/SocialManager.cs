@@ -68,29 +68,12 @@ public class SocialManager : MonoBehaviour
         
     }
 
-    public void Call(Player playerToCall, bool videoCall = false)
+    //TODO: Check if player is available before calling
+    public void Call(Contact playerToCall, bool videoCall = false)
     {
-        PhotonView caller = null;
+        contact = playerToCall;
 
-        string id = playerToCall.ID;
-        
-        foreach (Player player in GameObject.FindObjectsOfType<Player>())
-        {
-            if (player.ID == id)
-            {
-                caller = player.PV;
-            }
-        }
-        
-        if (caller == null)
-        {
-            Debug.Log("Player not found");
-            return;
-        }
-
-        contact = new Contact(caller, "Pepito");
-        
-        string channelName = GameManager.Instance.Player.PV.Controller.ActorNumber + "-" + PhotonNetwork.LocalPlayer.ActorNumber + Random.Range(1, 1000);
+        string channelName = PhotonNetwork.LocalPlayer.ActorNumber + "-" + Random.Range(1, 1000);
 
         StartCoroutine(CallTimeOut());
         OnGoingCallMenu x = (OnGoingCallMenu)MenuManager.Instance.GetMenu(Menu.CALLING).Menu;
@@ -99,7 +82,7 @@ public class SocialManager : MonoBehaviour
 
         MenuManager.Instance.OpenMenu(Menu.CALLING, true);
 
-        GameManager.Instance.Player.PV.RPC("CallRPC", caller.Controller, GameManager.Instance.Player.ID, channelName, videoCall);
+        GameManager.Instance.Player.PV.RPC("CallRPC", contact.PV.Controller, GameManager.Instance.Player.ID, channelName, videoCall);
         
         isVideoCall = videoCall;
     }
@@ -137,19 +120,21 @@ public class SocialManager : MonoBehaviour
 
     public void ReceiveCall(string callerID, string channelName, bool videoCall)
     {
-        PhotonView caller = null;
-        
-        foreach (Player player in GameObject.FindObjectsOfType<Player>())
-        {
-            if (player.ID == callerID)
-            {
-                caller = player.PV;
-            }
-        }
+        // Refresh contacts
+        GameManager.Instance.Player.RefreshContacts();
 
         //TODO: Get the name of the caller from the contacts list
+        string name = "";
         
-        contact = new Contact(caller, "Pepito");
+        Contact[] contacts = GameManager.Instance.Player.Contacts;
+        
+        foreach (Contact contact in contacts)
+        {
+            if (contact.ID == callerID)
+            {
+                this.contact = contact;
+            }
+        }
 
         this.channelName = channelName;
         

@@ -45,12 +45,25 @@ public class ApiClient
     public async Task<string> Post(string endpoint, string jsonData)
     {
         string responseContent = null;
+        
+        //If jsondata doesnt have " or { at the start and end, add them
+        if (!jsonData.StartsWith("{") && !jsonData.StartsWith("\""))
+        {
+            jsonData = "\"" + jsonData;
+        }
+
+        if (!jsonData.EndsWith("}") && !jsonData.EndsWith("\""))
+        {
+            jsonData += "\"";
+        }
 
         try
         {
             string json = "{";
-            json +=  "\"data\": \"" + jsonData + "\"";
+            json +=  "\"data\":" + jsonData;
             json += "}";
+            
+            //Debug.Log(json);
             
             StringContent content = new StringContent(json, Encoding.UTF8, "application/json");
             HttpResponseMessage response = await httpClient.PostAsync(new Uri(baseUrl + endpoint), content);
@@ -61,8 +74,6 @@ public class ApiClient
             }
             else
             {
-                Debug.LogError("Error");
-                
                 Debug.LogError(response.StatusCode);
             }
         }

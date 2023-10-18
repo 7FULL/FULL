@@ -26,7 +26,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         
         private Player player;
 
-        private ApiClient apiClient = new ApiClient("http://localhost:3000/api/");
+        private ApiClient apiClient = new ApiClient("http://localhost:1234/api/");
         
         public ApiClient ApiClient => apiClient;
 
