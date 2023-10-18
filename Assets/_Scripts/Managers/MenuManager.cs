@@ -5,9 +5,9 @@ using UnityEngine;
 public class MenuManager: MonoBehaviour
 {
     [SerializeField]
-    private List<MenuStruct> _menus;
+    private List<MenuStruct> menus;
     
-    private MenuStruct _currentMenu;
+    private MenuStruct currentMenu;
     
     // Singleton
     public static MenuManager Instance;
@@ -22,7 +22,7 @@ public class MenuManager: MonoBehaviour
     
     public void OpenMenu(Menu menu, bool mouseFocus = false)
     {
-        foreach (MenuStruct menuStruct in _menus)
+        foreach (MenuStruct menuStruct in menus)
         {
             if (menuStruct.MenuType == menu)
             {
@@ -36,14 +36,7 @@ public class MenuManager: MonoBehaviour
                 {
                     iMenu.OpenAnimation();
                 }
-                _currentMenu = menuStruct;
-                
-                // Free the mouse
-                if (!mouseFocus)
-                {
-                    Cursor.lockState = CursorLockMode.None;
-                    Cursor.visible = true;
-                }
+                currentMenu = menuStruct;
             }
             else
             {
@@ -62,12 +55,19 @@ public class MenuManager: MonoBehaviour
                 }
             }
         }
+        
+        // Free the mouse
+        if (!mouseFocus)
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
     }
 
     private void Update()
     {
         // If ther is no menuGameObject and player clicks the mouse button, focus cursor on the game
-        if (_currentMenu.MenuGameObject != null && !_currentMenu.MenuGameObject.activeSelf && Input.GetMouseButtonDown(0))
+        if (currentMenu.MenuGameObject != null && !currentMenu.MenuGameObject.activeSelf && Input.GetMouseButtonDown(0))
         {
             ToGame();
         }
@@ -75,20 +75,20 @@ public class MenuManager: MonoBehaviour
 
     public void CloseMenu()
     {
-        if (_currentMenu.MenuGameObject != null)
+        if (currentMenu.MenuGameObject != null)
         {
-            MenuUtils iMenu = _currentMenu.MenuGameObject.GetComponent<MenuUtils>();
+            MenuUtils iMenu = currentMenu.MenuGameObject.GetComponent<MenuUtils>();
             
             if (iMenu == null || !iMenu.HasAnimation)
             {
-                _currentMenu.MenuGameObject.SetActive(false);
+                currentMenu.MenuGameObject.SetActive(false);
             }
             else
             {
                 iMenu.CloseAnimation();
             }
             
-            _currentMenu = new MenuStruct(null, Menu.NONE, null);
+            currentMenu = new MenuStruct(null, Menu.NONE, null);
             
             // Free the mouse
             Cursor.lockState = CursorLockMode.None;
@@ -98,19 +98,19 @@ public class MenuManager: MonoBehaviour
     
     public void RegisterMenu(MenuStruct menuStruct)
     {
-        _menus.Add(menuStruct);
+        menus.Add(menuStruct);
     }
     
     public void RegisterMenu(GameObject menu, Menu menuType, MenuUtils menuUtils)
     {
-        _menus.Add(new MenuStruct(menu, menuType, menuUtils));
+        menus.Add(new MenuStruct(menu, menuType, menuUtils));
     }
     
     public void RegisterMenu(MenuStruct[] menuStructs)
     {
         foreach (MenuStruct menuStruct in menuStructs)
         {
-            _menus.Add(menuStruct);
+            menus.Add(menuStruct);
         }
     }
     
@@ -119,7 +119,7 @@ public class MenuManager: MonoBehaviour
     /// </summary>
     public void ToGame()
     {
-        foreach (MenuStruct menuStruct in _menus)
+        foreach (MenuStruct menuStruct in menus)
         {
             if (menuStruct.MenuType != Menu.NONE)
             {
@@ -136,7 +136,7 @@ public class MenuManager: MonoBehaviour
             }
         }
         
-        _currentMenu = new MenuStruct(null, Menu.NONE, null);
+        currentMenu = new MenuStruct(null, Menu.NONE, null);
         
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -144,7 +144,7 @@ public class MenuManager: MonoBehaviour
     
     public MenuStruct GetMenu(Menu menu)
     {
-        foreach (MenuStruct menuStruct in _menus)
+        foreach (MenuStruct menuStruct in menus)
         {
             if (menuStruct.MenuType == menu)
             {

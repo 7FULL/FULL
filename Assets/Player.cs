@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using KinematicCharacterController;
 using KinematicCharacterController.Examples;
 using Photon.Pun;
@@ -10,9 +11,9 @@ using Random = UnityEngine.Random;
 
 public class Player : Entity
 {
-    private int _id = 2;
+    private string id = "";
     
-    public int ID => _id;
+    public string ID => id;
     
     [SerializeField]
     private ExampleCharacterController Character;
@@ -29,38 +30,46 @@ public class Player : Entity
     [SerializeField]
     private Animator animator;
 
-    private PhotonView _pv;
+    private PhotonView pv;
 
-    public PhotonView PV => _pv;
+    public PhotonView PV => pv;
     
     [Tooltip("The name our player will have in the inspectior to identify it")]
     [InspectorName("Player Name")]
     [SerializeField]
-    private string _playerName = "Our Player";
+    private string playerName = "Our Player";
     
     [InspectorName("Smooth Blend Transition")]
     [SerializeField]
-    private float _smoothBlendTransition = 0.3f;
+    private float smoothBlendTransition = 0.3f;
 
     [InspectorName("Call Canvas")] 
     [SerializeField]
-    private GameObject _receiveCallCanvas;
+    private GameObject receiveCallCanvas;
     
     [InspectorName("OnGoingCall Canvas")] 
     [SerializeField]
-    private GameObject _onGoingCanvas;
+    private GameObject onGoingCanvas;
     
     [InspectorName("Calling Canvas")]
     [SerializeField]
-    private GameObject _callingCanvas;
+    private GameObject callingCanvas;
     
     [InspectorName("VideoCall Canvas")]
     [SerializeField]
-    private GameObject _videoCallCanvas;
+    private GameObject videoCallCanvas;
     
     [InspectorName("Video call camera")]
     [SerializeField]
-    private Camera _videoCallCamera;
+    private Camera videoCallCamera;
+    
+    [InspectorName("Max Void Hieght")]
+    [SerializeField]
+    private int maxVoidHeight = -50;
+    
+    private ApiClient api;
+
+    private UserData userData;
 
     private void Start()
     {
@@ -73,11 +82,11 @@ public class Player : Entity
         CharacterCamera.IgnoredColliders.Clear();
         CharacterCamera.IgnoredColliders.AddRange(Character.GetComponentsInChildren<Collider>());
         
-        _pv = GetComponent<PhotonView>();
+        pv = GetComponent<PhotonView>();
         
-        _videoCallCamera.enabled = false;
+        videoCallCamera.enabled = false;
 
-        if (!_pv.IsMine){
+        if (!pv.IsMine){
             CharacterCamera.gameObject.GetComponent<Camera>().enabled = false;
 
             // Listener
@@ -92,52 +101,63 @@ public class Player : Entity
         }
         else
         {
+            api = GameManager.Instance.ApiClient;
+
+            GetUserInfo();
+
             // We change all the layers to Player
             gameObject.layer = 3;
 
-            _videoCallCamera.Reset();
+            videoCallCamera.Reset();
             
             Character.MeshRoot.transform.GetChild(0).transform.GetChild(0).gameObject.layer = 3;
 
             // We register the menus
-            MenuManager.Instance.RegisterMenu(_receiveCallCanvas, Menu.RECEIVE_CALL, _receiveCallCanvas.GetComponent<ReceiveCallMenu>());
-            MenuManager.Instance.RegisterMenu(_onGoingCanvas, Menu.CALL, _onGoingCanvas.GetComponent<OnGoingCallMenu>());
-            MenuManager.Instance.RegisterMenu(_callingCanvas, Menu.CALLING, _callingCanvas.GetComponent<OnGoingCallMenu>());
-            MenuManager.Instance.RegisterMenu(_videoCallCanvas, Menu.VIDEO_CALL, _videoCallCanvas.GetComponent<OnGoingCallMenu>());
+            MenuManager.Instance.RegisterMenu(receiveCallCanvas, Menu.RECEIVE_CALL, receiveCallCanvas.GetComponent<ReceiveCallMenu>());
+            MenuManager.Instance.RegisterMenu(onGoingCanvas, Menu.CALL, onGoingCanvas.GetComponent<OnGoingCallMenu>());
+            MenuManager.Instance.RegisterMenu(callingCanvas, Menu.CALLING, callingCanvas.GetComponent<OnGoingCallMenu>());
+            MenuManager.Instance.RegisterMenu(videoCallCanvas, Menu.VIDEO_CALL, videoCallCanvas.GetComponent<OnGoingCallMenu>());
             
             // We change the name of the player
-            gameObject.name = _playerName;
-            
-            //TODO: Retrieve the id from the database
-            int x = Random.Range(1, 1000000);
-            
-            _pv.RPC("UpdateIDRPC", RpcTarget.AllBuffered, x);
+            gameObject.name = playerName;
         }
+    }
+
+    private async void GetUserInfo()
+    {
+        string x = SystemInfo.deviceUniqueIdentifier;
+
+        String response = await api.Post("user", x);
+
+        userData = JsonUtility.FromJson<UserData>(response);
+        
+        userData.Check();
+        
+        //Debug.Log(userData);
+
+        pv.RPC("UpdateIDRPC", RpcTarget.AllBuffered, x);
     }
 
     private void Update()
     {
-        if (!_pv.IsMine) return;
+        if (!pv.IsMine) return;
 
         HandleCharacterInput();
         
         TestCall();
         
         HandleCallCanvas();
+        
+        HandleVoidTP();
 
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            // Free mouse
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-        }
+        HandleMouseFocus();
     }
 
     #region Controller Input Handling
     
     private void LateUpdate()
     {
-        if (!_pv.IsMine) return;
+        if (!pv.IsMine) return;
         
         // Handle rotating the camera along with physics movers
         if (CharacterCamera.RotateWithPhysicsMover && Character.Motor.AttachedRigidbody != null)
@@ -197,11 +217,37 @@ public class Player : Entity
         Character.SetInputs(ref characterInputs);
         
         // Animation
-        animator.SetFloat("x", characterInputs.MoveAxisForward, _smoothBlendTransition, Time.deltaTime);
-        animator.SetFloat("y", characterInputs.MoveAxisRight, _smoothBlendTransition, Time.deltaTime);
+        animator.SetFloat("x", characterInputs.MoveAxisForward, smoothBlendTransition, Time.deltaTime);
+        animator.SetFloat("y", characterInputs.MoveAxisRight, smoothBlendTransition, Time.deltaTime);
     }
     
     #endregion
+
+    private void HandleMouseFocus()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            // Switch between cursor modes
+            if (Cursor.lockState == CursorLockMode.None)
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+            else
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+        }
+    }
+
+    private void HandleVoidTP()
+    {
+        if (Character.transform.position.y < maxVoidHeight)
+        {
+            GameManager.Instance.TPToSpawn(this);
+        }
+    }
     
     private void TestCall()
     {
@@ -209,8 +255,7 @@ public class Player : Entity
         {
             //We obtain the photonView of the other player
             Player other = GameObject.Find("Player(Clone)").GetComponent<Player>();
-
-            //TODO: Send the id of the player from database
+            
             SocialManager.Instance.Call(other, true);
         }
     }
@@ -240,7 +285,7 @@ public class Player : Entity
     }
     
     [PunRPC]
-    private void CallRPC(int callerID, string channelName, bool videoCall)
+    private void CallRPC(string callerID, string channelName, bool videoCall)
     {
         SocialManager.Instance.ReceiveCall(callerID, channelName, videoCall);
     }
@@ -258,19 +303,19 @@ public class Player : Entity
     }
     
     [PunRPC]
-    private void UpdateIDRPC(int id)
+    private void UpdateIDRPC(string id)
     {
-        _id = id;
+        this.id = id;
     }
     
     public void EnableVideo()
     {
-        _videoCallCamera.enabled = true;
+        videoCallCamera.enabled = true;
     }
     
     public void DisableVideo()
     {
-        _videoCallCamera.enabled = false;
+        videoCallCamera.enabled = false;
     }
     
     public override void Die()
@@ -282,6 +327,8 @@ public class Player : Entity
 
     private void RestorePlayer()
     {
-        //TODO: Clear the database of the player from objects and stuff
+        api.Post("user/restore", id);
+        
+        userData.Reset();
     }
 }

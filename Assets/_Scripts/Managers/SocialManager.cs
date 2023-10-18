@@ -9,35 +9,33 @@ using Random = UnityEngine.Random;
 public class SocialManager : MonoBehaviour
 {
 
-    private string _agoraAppID = "666729d18268402bb2f5f3ad40601c49";
-    
-    private string _photonAppID = "e11858fa-121d-49c0-906f-665c53c4e2f6";
+    private const string AGORA_APP_ID = "666729d18268402bb2f5f3ad40601c49";
 
     // Singleton
     private static SocialManager _instance;
     
     public static SocialManager Instance => _instance;
     
-    private IRtcEngine _rtcEngine;
+    private IRtcEngine rtcEngine;
     
-    private string _channelName = null;
+    private string channelName = null;
     
-    private Contact _contact;
+    private Contact contact;
     
-    public Contact Contact => _contact;
+    public Contact Contact => contact;
     
-    private bool _isOnCall = false;
+    private bool isOnCall = false;
     
-    private bool _isVideoCall = false;
+    private bool isVideoCall = false;
     
-    public bool IsOnCall => _isOnCall;
-    public bool IsBeingCalled => _contact != null;
-    public bool IsAvailable => _channelName == null && _contact == null;
+    public bool IsOnCall => isOnCall;
+    public bool IsBeingCalled => contact != null;
+    public bool IsAvailable => channelName == null && contact == null;
     
-    public string ChannelName => _channelName;
+    public string ChannelName => channelName;
     
     // In seconds
-    private int _callReponseTimeout = 15;
+    private int callReponseTimeout = 15;
 
     private void Awake()
     {
@@ -54,19 +52,19 @@ public class SocialManager : MonoBehaviour
     private void Start()
     {
         // Init RTC Engine
-        _rtcEngine = Agora.Rtc.RtcEngine.CreateAgoraRtcEngineEx();
+        rtcEngine = Agora.Rtc.RtcEngine.CreateAgoraRtcEngineEx();
         UserEventHandler handler = new UserEventHandler(this);
             
-        RtcEngineContext context = new RtcEngineContext(_agoraAppID, 0,
+        RtcEngineContext context = new RtcEngineContext(AGORA_APP_ID, 0,
             CHANNEL_PROFILE_TYPE.CHANNEL_PROFILE_LIVE_BROADCASTING,
             AUDIO_SCENARIO_TYPE.AUDIO_SCENARIO_GAME_STREAMING);
-        _rtcEngine.Initialize(context);
-        _rtcEngine.InitEventHandler(handler);
+        rtcEngine.Initialize(context);
+        rtcEngine.InitEventHandler(handler);
         
         // Set basic configuration
-        _rtcEngine.EnableAudio();
-        _rtcEngine.SetChannelProfile(CHANNEL_PROFILE_TYPE.CHANNEL_PROFILE_COMMUNICATION);
-        _rtcEngine.SetClientRole(CLIENT_ROLE_TYPE.CLIENT_ROLE_BROADCASTER);
+        rtcEngine.EnableAudio();
+        rtcEngine.SetChannelProfile(CHANNEL_PROFILE_TYPE.CHANNEL_PROFILE_COMMUNICATION);
+        rtcEngine.SetClientRole(CLIENT_ROLE_TYPE.CLIENT_ROLE_BROADCASTER);
         
     }
 
@@ -74,7 +72,7 @@ public class SocialManager : MonoBehaviour
     {
         PhotonView caller = null;
 
-        int id = playerToCall.ID;
+        string id = playerToCall.ID;
         
         foreach (Player player in GameObject.FindObjectsOfType<Player>())
         {
@@ -90,7 +88,7 @@ public class SocialManager : MonoBehaviour
             return;
         }
 
-        _contact = new Contact(caller, "Pepito");
+        contact = new Contact(caller, "Pepito");
         
         string channelName = GameManager.Instance.Player.PV.Controller.ActorNumber + "-" + PhotonNetwork.LocalPlayer.ActorNumber + Random.Range(1, 1000);
 
@@ -103,7 +101,7 @@ public class SocialManager : MonoBehaviour
 
         GameManager.Instance.Player.PV.RPC("CallRPC", caller.Controller, GameManager.Instance.Player.ID, channelName, videoCall);
         
-        _isVideoCall = videoCall;
+        isVideoCall = videoCall;
     }
 
     IEnumerator CallTimeOut(int seconds = 0)
@@ -114,7 +112,7 @@ public class SocialManager : MonoBehaviour
         }
         else
         {
-            yield return new WaitForSecondsRealtime(_callReponseTimeout);
+            yield return new WaitForSecondsRealtime(callReponseTimeout);
         }
 
         Clean();
@@ -126,18 +124,18 @@ public class SocialManager : MonoBehaviour
 
     public void Clean()
     {
-        if (_isVideoCall)
+        if (isVideoCall)
         {
-            _contact.PV.gameObject.GetComponent<Player>().DisableVideo();
+            contact.PV.gameObject.GetComponent<Player>().DisableVideo();
         }
         
-        _contact = null;
-        _channelName = null;
-        _isOnCall = false;
-        _isVideoCall = false;
+        contact = null;
+        channelName = null;
+        isOnCall = false;
+        isVideoCall = false;
     }
 
-    public void ReceiveCall(int callerID, string channelName, bool videoCall)
+    public void ReceiveCall(string callerID, string channelName, bool videoCall)
     {
         PhotonView caller = null;
         
@@ -151,11 +149,11 @@ public class SocialManager : MonoBehaviour
 
         //TODO: Get the name of the caller from the contacts list
         
-        _contact = new Contact(caller, "Pepito");
+        contact = new Contact(caller, "Pepito");
 
-        _channelName = channelName;
+        this.channelName = channelName;
         
-        _isVideoCall = videoCall;
+        isVideoCall = videoCall;
          
         MenuStruct menuStruct = MenuManager.Instance.GetMenu(Menu.RECEIVE_CALL);
 
@@ -178,27 +176,27 @@ public class SocialManager : MonoBehaviour
     {
         JoinCall();
 
-        GameManager.Instance.Player.PV.RPC("AcceptCallRPC", _contact.PV.Controller);
+        GameManager.Instance.Player.PV.RPC("AcceptCallRPC", contact.PV.Controller);
     }
 
     public void JoinCall()
     {
-        if (_contact == null)
+        if (contact == null)
         {
             Debug.Log("Contact not found");
             return;
         }
         
-        if (_isVideoCall)
+        if (isVideoCall)
         {
-            _contact.PV.gameObject.GetComponent<Player>().EnableVideo();
+            contact.PV.gameObject.GetComponent<Player>().EnableVideo();
         }
         
         StopAllCoroutines();
 
         MenuStruct menuStruct;
         
-        if (_isVideoCall)
+        if (isVideoCall)
         {
             menuStruct = MenuManager.Instance.GetMenu(Menu.VIDEO_CALL);
         }
@@ -217,7 +215,7 @@ public class SocialManager : MonoBehaviour
 
         menu.Configure();
         
-        if(_isVideoCall)
+        if(isVideoCall)
         {
             MenuManager.Instance.OpenMenu(Menu.VIDEO_CALL, true);
         }
@@ -226,20 +224,20 @@ public class SocialManager : MonoBehaviour
             MenuManager.Instance.OpenMenu(Menu.CALL, true);
         }
         
-        _isOnCall = true;
+        isOnCall = true;
             
-        _rtcEngine.JoinChannel("", _channelName);
+        rtcEngine.JoinChannel("", channelName);
     }
 
     public void LeaveCall()
     {
-        GameManager.Instance.Player.PV.RPC("LeaveCallRPC", _contact.PV.Controller);
+        GameManager.Instance.Player.PV.RPC("LeaveCallRPC", contact.PV.Controller);
         EndCall();
     }
 
     public void EndCall()
     {
-        if (_contact == null)
+        if (contact == null)
         {
             Debug.Log("Contact not found");
             return;
@@ -247,17 +245,26 @@ public class SocialManager : MonoBehaviour
         
         MenuManager.Instance.CloseMenu();
 
-        _rtcEngine.LeaveChannel();
+        rtcEngine.LeaveChannel();
 
         Clean();
+        
+        MenuManager.Instance.Focus();
     }
     
     private void OnDestroy()
     {
-        if (_rtcEngine == null) return;
-        _rtcEngine.InitEventHandler(null);
-        _rtcEngine.LeaveChannel();
-        _rtcEngine.Dispose();
+        LeaveCall();
+        
+        if (rtcEngine == null) return;
+        rtcEngine.InitEventHandler(null);
+        rtcEngine.LeaveChannel();
+        rtcEngine.Dispose();
+    }
+
+    private void OnApplicationQuit()
+    {
+        LeaveCall();
     }
 }
 

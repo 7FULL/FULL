@@ -5,6 +5,7 @@ using Photon.Realtime;
 using SunTemple;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Video;
 
 public class GameManager : MonoBehaviourPunCallbacks
     {
@@ -18,17 +19,25 @@ public class GameManager : MonoBehaviourPunCallbacks
         
         [Tooltip("Spawn point")]
         [SerializeField]
-        private Transform _spawnPoint;
+        private Transform spawnPoint;
         
         // The name of the room where the player will be connected
-        private Rooms _mainRoom = Rooms.LOBBY;
+        private Rooms mainRoom = Rooms.LOBBY;
         
-        private Player _player;
+        private Player player;
 
-        public Player Player => _player;
+        private ApiClient apiClient = new ApiClient("http://localhost:3000/api/");
         
+        public ApiClient ApiClient => apiClient;
+
+        public Player Player => player;
         
+        [SerializeField] private Animation imageLoad;
         
+        [SerializeField] private VideoPlayer videoPlayer;
+        
+        [SerializeField] private GameObject loadingCanvas;
+
         private void Awake()
         {
 	        PhotonNetwork.ConnectUsingSettings();
@@ -51,7 +60,6 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
 		{
-			Debug.LogError("Joining room "+ scene.name);
 			JoinRoom(scene.name);
 		} 
         
@@ -129,17 +137,36 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         public override void OnJoinedRoom()
         {
-	        if (_player == null)
+	        if (player == null)
 	        {
 		        // we're in a room. spawn a character for the local player. it gets synced by using PhotonNetwork.Instantiate
-		        GameObject player = PhotonNetwork.Instantiate(this.playerPrefab.name, _spawnPoint.position, Quaternion.identity, 0);
+		        GameObject player = PhotonNetwork.Instantiate(this.playerPrefab.name, spawnPoint.position, spawnPoint.rotation, 0);
 		        
-		        _player = player.GetComponent<Player>();
+		        this.player = player.GetComponent<Player>();
+
+		        StartCoroutine(WaitForVideo());
 	        }
 	        else
 	        {
 		        Debug.Log("Connected to room but player already instantiated");
 	        }
+        }
+
+        public void TPToSpawn(Player player)
+        {
+	        player.transform.position = spawnPoint.position;
+	        player.transform.rotation = spawnPoint.rotation;
+        }
+
+        IEnumerator WaitForVideo()
+        {
+	        yield return new WaitUntil(() => !videoPlayer.isPlaying);
+	        
+	        videoPlayer.gameObject.SetActive(false);
+	        
+	        loadingCanvas.SetActive(false);
+	        
+	        imageLoad.Play();
         }
 
         public override void OnConnectedToMaster()
@@ -154,7 +181,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 		        MenuManager.Instance.OpenMenu(Menu.RECONNECT);
 	        }
 	        
-	        _player = null;
+	        player = null;
         }
         
         public void Reconnect()
@@ -185,12 +212,12 @@ public class GameManager : MonoBehaviourPunCallbacks
 
 		public override void OnDisconnected(DisconnectCause cause)
 		{
-			_player = null;
+			player = null;
 			MenuManager.Instance.OpenMenu(Menu.RECONNECT);
 		}
 
 		public override void OnLeftRoom()
 		{
-			_player = null;
+			player = null;
 		}
     }
