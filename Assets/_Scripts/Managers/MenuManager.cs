@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,6 +9,9 @@ public class MenuManager: MonoBehaviour
     private List<MenuStruct> menus;
     
     private MenuStruct currentMenu;
+    
+    [SerializeField]
+    private PopUp popup;
     
     // Singleton
     public static MenuManager Instance;
@@ -20,7 +24,13 @@ public class MenuManager: MonoBehaviour
         }
     }
     
-    public void OpenMenu(Menu menu, bool mouseFocus = false)
+    
+    /// <summary>
+    /// This function opens a menu and focus cursor on it
+    /// </summary>
+    /// <param name="menu">The menu to open</param>
+    /// <param name="keepFocus">If true, the mouse will not be focused on the menu</param>
+    public void OpenMenu(Menu menu, bool keepFocus = false)
     {
         foreach (MenuStruct menuStruct in menus)
         {
@@ -57,7 +67,7 @@ public class MenuManager: MonoBehaviour
         }
         
         // Free the mouse
-        if (!mouseFocus)
+        if (!keepFocus)
         {
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
@@ -94,6 +104,22 @@ public class MenuManager: MonoBehaviour
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
         }   
+    }
+    
+    public void PopUp(string message)
+    {
+        //TODO: No funciona el popup no sale
+        popup.Configure(message);
+        popup.OpenAnimation();
+        
+        StartCoroutine(WaitToClosePopUp());
+    }
+    
+    IEnumerator WaitToClosePopUp()
+    {
+        yield return new WaitForSecondsRealtime(3f);
+        
+        popup.CloseAnimation();
     }
     
     public void RegisterMenu(MenuStruct menuStruct)

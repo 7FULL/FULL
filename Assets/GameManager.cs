@@ -26,7 +26,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         
         private Player player;
 
-        private ApiClient apiClient = new ApiClient("http://localhost:1234/api/");
+        private ApiClient apiClient = new ApiClient("http://localhost:3000/api/");
         
         public ApiClient ApiClient => apiClient;
 
@@ -208,6 +208,15 @@ public class GameManager : MonoBehaviourPunCallbacks
 		public void Quit()
 		{
 	        Application.Quit();
+		}
+
+		public override void OnPlayerLeftRoom(Photon.Realtime.Player otherPlayer)
+		{
+			//Find the player and if it is contact in the call leaveroom
+			if (SocialManager.Instance.Contact != null && SocialManager.Instance.Contact.PV.Controller.ActorNumber == otherPlayer.ActorNumber)
+			{
+				SocialManager.Instance.EndCall();
+			}
 		}
 
 		public override void OnDisconnected(DisconnectCause cause)

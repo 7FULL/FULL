@@ -21,11 +21,18 @@ public class OnGoingCallMenu: MenuUtils
         _animator.SetBool("IsOpen", true);
     }
     
-    public void Configure()
+    public void Configure(Contact contact = null)
     {
-        //TODO: Add the contact name. Text doesnt update
-        _contactName.text = SocialManager.Instance.Contact.Name;
-        Debug.Log(SocialManager.Instance.Contact);
+        //Debug.Log(this.gameObject.name);
+        //Debug.Log(SocialManager.Instance.Contact.Name);
+        //Debug.Log(_contactName.text);
+        
+        if (contact == null)
+        {
+            contact = SocialManager.Instance.Contact;
+        }
+        
+        _contactName.text = contact.Name;
     }
     
     public override void CloseAnimation()

@@ -39,6 +39,10 @@ public class Player : Entity
     [SerializeField]
     private string playerName = "Our Player";
     
+    [InspectorName("Max Reach Distance")]
+    [SerializeField]
+    private int maxReachDistance = 5;
+    
     [InspectorName("Smooth Blend Transition")]
     [SerializeField]
     private float smoothBlendTransition = 0.3f;
@@ -59,6 +63,10 @@ public class Player : Entity
     [SerializeField]
     private GameObject videoCallCanvas;
     
+    [InspectorName("Contact request Canvas")]
+    [SerializeField]
+    private GameObject contactRequestCanvas;
+    
     [InspectorName("Video call camera")]
     [SerializeField]
     private Camera videoCallCamera;
@@ -67,14 +75,32 @@ public class Player : Entity
     [SerializeField]
     private int maxVoidHeight = -50;
     
+    [Tooltip("The time the player has to press the button to send a contact request (in seconds)")]
+    [InspectorName("Request Time")]
+    [SerializeField]
+    private int requestTime = 5;
+
     private ApiClient api;
 
     private UserData userData;
     
-    public Contact[] Contacts => userData.contacts;
+    public Contact[] Contacts => userData.Contacts;
+    
+    private bool isRequestingContact = false;
+    
+    private int startedRequestTime = 0;
+    
+    private GameObject contactRequest;
+    
+    private int contactTimeOut = 10;
 
     private void Start()
     {
+        // We update the request time because fixed update executes 50 times per second
+        requestTime *= 50;
+        
+        startedRequestTime = requestTime;
+        
         Cursor.lockState = CursorLockMode.Locked;
 
         // Tell camera to follow transform
@@ -119,6 +145,7 @@ public class Player : Entity
             MenuManager.Instance.RegisterMenu(onGoingCanvas, Menu.CALL, onGoingCanvas.GetComponent<OnGoingCallMenu>());
             MenuManager.Instance.RegisterMenu(callingCanvas, Menu.CALLING, callingCanvas.GetComponent<OnGoingCallMenu>());
             MenuManager.Instance.RegisterMenu(videoCallCanvas, Menu.VIDEO_CALL, videoCallCanvas.GetComponent<OnGoingCallMenu>());
+            MenuManager.Instance.RegisterMenu(contactRequestCanvas, Menu.CONTACT_REQUEST, contactRequestCanvas.GetComponent<OnGoingCallMenu>());
             
             // We change the name of the player
             gameObject.name = playerName;
@@ -128,7 +155,13 @@ public class Player : Entity
     //TODO: RefreshContacts when opening social menu
     public void RefreshContacts()
     {
-        Contact[] contactsAux = userData.contacts;
+        Contact[] contactsAux = userData.Contacts;
+        
+        //Clean all the PVs
+        foreach (Contact contact in contactsAux)
+        {
+            contact.SetPV(null);
+        }
         
         Player[] players = GameObject.FindObjectsOfType<Player>();
 
@@ -148,7 +181,17 @@ public class Player : Entity
     {
         string uniqueIdentifier = SystemInfo.deviceUniqueIdentifier;
         
-        uniqueIdentifier = "1";
+        // If a development build
+        if (Debug.isDebugBuild)
+        {
+            uniqueIdentifier = "2";
+
+            
+        }
+        if (Application.isEditor)
+        {
+            uniqueIdentifier = "1";
+        }
         
         /*
         Contact contact = new Contact("Rodrigo", "2");
@@ -173,7 +216,7 @@ public class Player : Entity
             return;
         }
 
-        userData = JsonUtility.FromJson<UserDataResponse>(response).ToUserData();
+        userData = JsonUtility.FromJson<UserDataResponse>(response).ToUserData(api,id);
 
         /*#region Just for development
             uniqueIdentifier = Random.Range(0, 1000000).ToString();
@@ -203,10 +246,38 @@ public class Player : Entity
         HandleVoidTP();
 
         HandleMouseFocus();
+        
+        HandleRaycast();
 
         if (Input.GetKeyDown(KeyCode.P))
         {
             RefreshContacts();
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        if (!pv.IsMine) return;
+
+        if (isRequestingContact)
+        {
+            if (requestTime >= 0)
+            {
+                requestTime--;
+            }
+
+            if (requestTime == 0)
+            {
+                if (!SocialManager.Instance.IsReceivingContactRequest)
+                {
+                    SocialManager.Instance.ContactRequest(contactRequest.GetComponentInParent<Player>());
+                    StartCoroutine(WaitForContactResponse());
+                }
+                else
+                {
+                    SocialManager.Instance.AcceptContactRequest();
+                }
+            }
         }
     }
 
@@ -280,6 +351,55 @@ public class Player : Entity
     
     #endregion
 
+    IEnumerator WaitForContactResponse()
+    {
+        yield return new WaitForSecondsRealtime(contactTimeOut);
+        
+        if (isRequestingContact)
+        {
+            isRequestingContact = false;
+            requestTime = startedRequestTime;
+            
+            contactRequest = null;
+
+            SocialManager.Instance.ClearContactRequest();
+        }
+        
+        Debug.Log("Contact request time out");
+    }
+    
+    private void HandleRaycast()
+    {
+        RaycastHit hit;
+
+        if (Physics.Raycast(CharacterCamera.Transform.position, CharacterCamera.Transform.forward, out hit, maxReachDistance))
+        {
+            if (hit.collider.gameObject.CompareTag("Player"))
+            {
+                if (Input.GetKey(KeyCode.F))
+                {
+                    isRequestingContact = true;
+                    
+                    contactRequest = hit.collider.gameObject;
+                }
+                else
+                {
+                    isRequestingContact = false;
+                    requestTime = startedRequestTime;
+                    
+                    contactRequest = null;
+                }
+            }
+            else
+            {
+                isRequestingContact = false;
+                requestTime = startedRequestTime;
+                
+                contactRequest = null;
+            }
+        }
+    }
+
     private void HandleMouseFocus()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
@@ -310,7 +430,7 @@ public class Player : Entity
     {
         if (Input.GetKeyDown(KeyCode.U))
         {
-            SocialManager.Instance.Call(userData.contacts[0], true);
+            SocialManager.Instance.Call(userData.Contacts[0], true);
         }
     }
 
@@ -338,29 +458,51 @@ public class Player : Entity
         }
     }
     
+    #region RPCs
     [PunRPC]
-    private void CallRPC(string callerID, string channelName, bool videoCall)
+    void CallRPC(string callerID, string channelName, bool videoCall)
     {
         SocialManager.Instance.ReceiveCall(callerID, channelName, videoCall);
     }
     
     [PunRPC]
-    public void AcceptCallRPC()
+    void AcceptCallRPC()
     {
         SocialManager.Instance.JoinCall();
     }
     
     [PunRPC]
-    public void LeaveCallRPC()
+    void LeaveCallRPC()
     {
         SocialManager.Instance.EndCall();
     }
     
     [PunRPC]
-    private void UpdateIDRPC(string id)
+    void UpdateIDRPC(string id)
     {
         this.id = id;
+        
+        // We change the name of the player
+        this.gameObject.name =  id;
     }
+    
+    [PunRPC]
+    void ReciveContactRequestRPC(string contactID)
+    {
+        SocialManager.Instance.ReceiveContactRequest(contactID);
+    }
+    
+    [PunRPC]
+    void AcceptContactRequestRPC()
+    {
+        //TODO: Open the new contact menu
+        Debug.Log("Contact request accepted");
+        
+        MenuManager.Instance.PopUp("Contact request accepted");
+        
+        StopAllCoroutines();
+    }
+    #endregion
     
     public void EnableVideo()
     {

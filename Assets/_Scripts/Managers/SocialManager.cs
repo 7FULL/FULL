@@ -21,17 +21,25 @@ public class SocialManager : MonoBehaviour
     private string channelName = null;
     
     private Contact contact;
+    private Player requestContact;
     
     public Contact Contact => contact;
+    public Player RequestContact => requestContact;
     
     private bool isOnCall = false;
     
     private bool isVideoCall = false;
     
+    private bool isCalling = false;
+    
+    private bool isReceivingContactRequest = false;
+    
+    public bool IsReceivingContactRequest => isReceivingContactRequest;
+    public bool IsCalling => isCalling;
     public bool IsOnCall => isOnCall;
     public bool IsBeingCalled => contact != null;
     public bool IsAvailable => channelName == null && contact == null;
-    
+
     public string ChannelName => channelName;
     
     // In seconds
@@ -85,6 +93,8 @@ public class SocialManager : MonoBehaviour
         GameManager.Instance.Player.PV.RPC("CallRPC", contact.PV.Controller, GameManager.Instance.Player.ID, channelName, videoCall);
         
         isVideoCall = videoCall;
+        
+        isCalling = true;
     }
 
     IEnumerator CallTimeOut(int seconds = 0)
@@ -116,6 +126,7 @@ public class SocialManager : MonoBehaviour
         channelName = null;
         isOnCall = false;
         isVideoCall = false;
+        isCalling = false;
     }
 
     public void ReceiveCall(string callerID, string channelName, bool videoCall)
@@ -123,9 +134,6 @@ public class SocialManager : MonoBehaviour
         // Refresh contacts
         GameManager.Instance.Player.RefreshContacts();
 
-        //TODO: Get the name of the caller from the contacts list
-        string name = "";
-        
         Contact[] contacts = GameManager.Instance.Player.Contacts;
         
         foreach (Contact contact in contacts)
@@ -237,19 +245,68 @@ public class SocialManager : MonoBehaviour
         MenuManager.Instance.Focus();
     }
     
+    public void ClearContactRequest()
+    {
+        isReceivingContactRequest = false;
+        
+        requestContact = null;
+    }
+    
+    public void ContactRequest(Player player)
+    {
+        isReceivingContactRequest = true;
+
+        GameManager.Instance.Player.PV.RPC("ReciveContactRequestRPC", player.PV.Controller, GameManager.Instance.Player.ID);
+        
+        MenuManager.Instance.PopUp("Contact request sent successfully");
+    }
+    
+    public void ReceiveContactRequest(string playerID)
+    {
+        isReceivingContactRequest = true;
+        
+        Player player = GameObject.Find(playerID).GetComponent<Player>();
+        
+        if (player == null)
+        {
+            Debug.Log("Player not found");
+            return;
+        }
+        
+        requestContact = player;
+        
+        MenuManager.Instance.PopUp("New contact request");
+    }
+    
+    public void AcceptContactRequest()
+    {
+        if (requestContact != null)
+        {
+            GameManager.Instance.Player.PV.RPC("AcceptContactRequestRPC", requestContact.PV.Controller);
+            
+            Debug.Log("Sending contact request to " + requestContact.ID);
+            
+            //TODO: Open new contact menu
+        }else{
+            Debug.Log("Player not found");
+        }
+    }
+    
+    public void DeclineContactRequest()
+    {
+        GameManager.Instance.Player.PV.RPC("DeclineContactRequestRPC", requestContact.PV.Controller);
+        
+        requestContact = null;
+        
+        MenuManager.Instance.CloseMenu();
+    }
+    
     private void OnDestroy()
     {
-        LeaveCall();
-        
         if (rtcEngine == null) return;
         rtcEngine.InitEventHandler(null);
         rtcEngine.LeaveChannel();
         rtcEngine.Dispose();
-    }
-
-    private void OnApplicationQuit()
-    {
-        LeaveCall();
     }
 }
 

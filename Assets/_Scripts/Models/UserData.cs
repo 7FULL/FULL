@@ -3,14 +3,24 @@
 [Serializable]
 public class UserData
 {
-    public Contact[] contacts;
+    private Contact[] contacts;
     
-    public int coins;
+    public Contact[] Contacts => contacts;
+
+    private int coins;
+
+    private string id;
     
-    public UserData(Contact[] contacts, int coins)
+    public int Coins => coins;
+    
+    private ApiClient api;
+    
+    public UserData(Contact[] contacts, int coins, string id, ApiClient api)
     {
         this.contacts = contacts;
         this.coins = coins;
+        this.id = id;
+        this.api = api;
         
         Check();
     }
@@ -57,7 +67,6 @@ public class UserData
         return result;
     }
     
-    //TODO: Add it to the database
     public void AddContact(Contact contact)
     {
         Contact[] newContacts = new Contact[contacts.Length + 1];
@@ -70,6 +79,13 @@ public class UserData
         newContacts[newContacts.Length - 1] = contact;
 
         contacts = newContacts;
+        
+        string json = "{";
+        json +=  "\"contact\":" + contact.ToJson() + ",";
+        json +=  "\"user\": \"" + id + "\"";
+        json += "}";
+
+        api.Post("contact", json);
     }
 
     public void RemoveContact(Contact contact)
@@ -87,14 +103,14 @@ public class UserDataResponse
     public ContactResponse[] contacts;
     
     public int coins;
-    
+
     public UserDataResponse(ContactResponse[] contacts, int coins)
     {
         this.contacts = contacts;
         this.coins = coins;
     }
     
-    public UserData ToUserData()
+    public UserData ToUserData(ApiClient api, string id)
     {
         Contact[] newContacts = new Contact[contacts.Length];
 
@@ -103,6 +119,6 @@ public class UserDataResponse
             newContacts[i] = contacts[i].ToContact();
         }
         
-        return new UserData(newContacts, coins);
+        return new UserData(newContacts, coins, id, api);
     }
 }

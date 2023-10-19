@@ -7,4 +7,5 @@
     CALL,
     CALLING,
     VIDEO_CALL,
+    CONTACT_REQUEST,
 }
