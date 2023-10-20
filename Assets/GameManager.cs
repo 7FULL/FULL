@@ -3,6 +3,7 @@ using System.Collections;
 using Photon.Pun;
 using Photon.Realtime;
 using SunTemple;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Video;
@@ -37,6 +38,8 @@ public class GameManager : MonoBehaviourPunCallbacks
         [SerializeField] private VideoPlayer videoPlayer;
         
         [SerializeField] private GameObject loadingCanvas;
+
+        [SerializeField] private TMP_InputField contactInput;
 
         private void Awake()
         {
@@ -134,6 +137,17 @@ public class GameManager : MonoBehaviourPunCallbacks
 		        door.EditorOpen();
 	        }
 		}
+
+        public void AddContact()
+        {
+	        Player player = SocialManager.Instance.RequestContact;
+
+	        Contact contact = new Contact(contactInput.text, player.ID);
+	        
+	        contact.SetPV(player.PV);
+
+	        this.player.AddContact(contact);
+        }
 
         public override void OnJoinedRoom()
         {

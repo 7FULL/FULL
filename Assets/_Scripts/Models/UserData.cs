@@ -1,6 +1,6 @@
 ﻿using System;
+using UnityEngine;
 
-[Serializable]
 public class UserData
 {
     private Contact[] contacts;
@@ -67,25 +67,40 @@ public class UserData
         return result;
     }
     
-    public void AddContact(Contact contact)
+    public void AddToContact(Contact contact)
     {
-        Contact[] newContacts = new Contact[contacts.Length + 1];
-
-        for (int i = 0; i < contacts.Length; i++)
+        if (contact == null)
         {
-            newContacts[i] = contacts[i];
+            Debug.LogError("Contact is null");
         }
+        
+        if (contacts.Length > 0)
+        {
+            Contact[] newContacts = new Contact[contacts.Length + 1];
 
-        newContacts[newContacts.Length - 1] = contact;
+            for (int i = 0; i < contacts.Length; i++)
+            {
+                newContacts[i] = contacts[i];
+            }
 
-        contacts = newContacts;
+            newContacts[newContacts.Length - 1] = contact;
+
+            contacts = newContacts;
+        }
+        else
+        {
+            contacts = new Contact[] { contact };
+        }
         
         string json = "{";
         json +=  "\"contact\":" + contact.ToJson() + ",";
         json +=  "\"user\": \"" + id + "\"";
         json += "}";
 
-        api.Post("contact", json);
+        api.Post("contact/add", json);
+        
+        //Close the menu
+        MenuManager.Instance.CloseMenu();
     }
 
     public void RemoveContact(Contact contact)
@@ -119,6 +134,8 @@ public class UserDataResponse
             newContacts[i] = contacts[i].ToContact();
         }
         
-        return new UserData(newContacts, coins, id, api);
+        UserData userData = new UserData(newContacts, coins, id, api);
+        
+        return userData;
     }
 }

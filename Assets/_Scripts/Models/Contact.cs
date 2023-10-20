@@ -1,7 +1,6 @@
 ﻿using System;
 using Photon.Pun;
 
-[Serializable]
 public class Contact
 {
     private PhotonView pv;

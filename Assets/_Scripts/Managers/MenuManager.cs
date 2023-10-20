@@ -71,6 +71,8 @@ public class MenuManager: MonoBehaviour
         {
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
+            
+            GameManager.Instance.Player.Stop();
         }
     }
 
@@ -100,15 +102,16 @@ public class MenuManager: MonoBehaviour
             
             currentMenu = new MenuStruct(null, Menu.NONE, null);
             
-            // Free the mouse
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            // Lock the mouse
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+            
+            GameManager.Instance.Player.Resume();
         }   
     }
     
     public void PopUp(string message)
     {
-        //TODO: No funciona el popup no sale
         popup.Configure(message);
         popup.OpenAnimation();
         
@@ -166,6 +169,8 @@ public class MenuManager: MonoBehaviour
         
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+        
+        GameManager.Instance.Player.Resume();
     }
     
     public MenuStruct GetMenu(Menu menu)
@@ -186,6 +191,8 @@ public class MenuManager: MonoBehaviour
         // Focus mouse on the game
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+        
+        GameManager.Instance.Player.Resume();
     }
 }
 

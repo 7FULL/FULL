@@ -131,6 +131,32 @@ public class SocialManager : MonoBehaviour
 
     public void ReceiveCall(string callerID, string channelName, bool videoCall)
     {
+        // If we already have the player as contact, we don't send the request
+        Contact[] contactsAux = GameManager.Instance.Player.Contacts;
+
+        Player player = GameObject.Find(callerID).GetComponent<Player>();
+
+        bool aux = false;
+        
+        for (int i = 0; i < contactsAux.Length; i++)
+        {
+            if (contactsAux[i].ID == player.ID)
+            {
+                aux = true;
+            }
+        }
+
+        if (!aux)
+        {
+            requestContact = player;
+            
+            GameManager.Instance.Player.PV.RPC("AcceptContactRequestRPC", player.PV.Controller, GameManager.Instance.Player.ID);
+            
+            MenuManager.Instance.PopUp("A player that has you as a contact and you dont is calling you, add it first");
+            
+            return;
+        }
+        
         // Refresh contacts
         GameManager.Instance.Player.RefreshContacts();
 
@@ -142,6 +168,12 @@ public class SocialManager : MonoBehaviour
             {
                 this.contact = contact;
             }
+        }
+
+        if (contact == null)
+        {
+            Debug.Log("Contact not found");
+            return;
         }
 
         this.channelName = channelName;
@@ -255,6 +287,8 @@ public class SocialManager : MonoBehaviour
     public void ContactRequest(Player player)
     {
         isReceivingContactRequest = true;
+        
+        requestContact = player;
 
         GameManager.Instance.Player.PV.RPC("ReciveContactRequestRPC", player.PV.Controller, GameManager.Instance.Player.ID);
         
@@ -274,7 +308,7 @@ public class SocialManager : MonoBehaviour
         }
         
         requestContact = player;
-        
+
         MenuManager.Instance.PopUp("New contact request");
     }
     
@@ -283,23 +317,21 @@ public class SocialManager : MonoBehaviour
         if (requestContact != null)
         {
             GameManager.Instance.Player.PV.RPC("AcceptContactRequestRPC", requestContact.PV.Controller);
-            
-            Debug.Log("Sending contact request to " + requestContact.ID);
-            
-            //TODO: Open new contact menu
+
+            MenuManager.Instance.OpenMenu(Menu.CONTACT_REQUEST);
         }else{
             Debug.Log("Player not found");
         }
     }
     
-    public void DeclineContactRequest()
+    /*public void DeclineContactRequest()
     {
         GameManager.Instance.Player.PV.RPC("DeclineContactRequestRPC", requestContact.PV.Controller);
         
         requestContact = null;
         
         MenuManager.Instance.CloseMenu();
-    }
+    }*/
     
     private void OnDestroy()
     {

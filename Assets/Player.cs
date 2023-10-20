@@ -62,11 +62,7 @@ public class Player : Entity
     [InspectorName("VideoCall Canvas")]
     [SerializeField]
     private GameObject videoCallCanvas;
-    
-    [InspectorName("Contact request Canvas")]
-    [SerializeField]
-    private GameObject contactRequestCanvas;
-    
+
     [InspectorName("Video call camera")]
     [SerializeField]
     private Camera videoCallCamera;
@@ -79,6 +75,8 @@ public class Player : Entity
     [InspectorName("Request Time")]
     [SerializeField]
     private int requestTime = 5;
+    
+    private bool canMove = true;
 
     private ApiClient api;
 
@@ -92,7 +90,7 @@ public class Player : Entity
     
     private GameObject contactRequest;
     
-    private int contactTimeOut = 10;
+    private int contactTimeOut = 20;
 
     private void Start()
     {
@@ -145,8 +143,7 @@ public class Player : Entity
             MenuManager.Instance.RegisterMenu(onGoingCanvas, Menu.CALL, onGoingCanvas.GetComponent<OnGoingCallMenu>());
             MenuManager.Instance.RegisterMenu(callingCanvas, Menu.CALLING, callingCanvas.GetComponent<OnGoingCallMenu>());
             MenuManager.Instance.RegisterMenu(videoCallCanvas, Menu.VIDEO_CALL, videoCallCanvas.GetComponent<OnGoingCallMenu>());
-            MenuManager.Instance.RegisterMenu(contactRequestCanvas, Menu.CONTACT_REQUEST, contactRequestCanvas.GetComponent<OnGoingCallMenu>());
-            
+
             // We change the name of the player
             gameObject.name = playerName;
         }
@@ -185,8 +182,6 @@ public class Player : Entity
         if (Debug.isDebugBuild)
         {
             uniqueIdentifier = "2";
-
-            
         }
         if (Application.isEditor)
         {
@@ -203,21 +198,28 @@ public class Player : Entity
 
         api.Post("contact", json);
         */
+        
+        pv.RPC("UpdateIDRPC", RpcTarget.AllBuffered, uniqueIdentifier);
 
         string response = "";
         
         try
         {
             response = await api.Post("user", uniqueIdentifier);
+
+            userData = JsonUtility.FromJson<UserDataResponse>(response).ToUserData(api,id);
         }
         catch (Exception e)
         {
             //TODO: Servers down menu
+            Debug.LogError(e);
             return;
         }
-
-        userData = JsonUtility.FromJson<UserDataResponse>(response).ToUserData(api,id);
-
+        
+        if (userData == null)
+        {
+            Debug.LogError("User data is null");
+        }
         /*#region Just for development
             uniqueIdentifier = Random.Range(0, 1000000).ToString();
             // We find the other player
@@ -226,16 +228,14 @@ public class Player : Entity
             if (other != null)
             {
                 // We add to contacts the other player
-                userData.AddContact(new Contact(other.PV, "Frederico", other.ID));
+                userData.AddToContact(new Contact(other.PV, "Frederico", other.ID));
             }
         #endregion*/
-        
-        pv.RPC("UpdateIDRPC", RpcTarget.AllBuffered, uniqueIdentifier);
     }
 
     private void Update()
     {
-        if (!pv.IsMine) return;
+        if (!pv.IsMine || !canMove) return;
 
         HandleCharacterInput();
         
@@ -257,7 +257,7 @@ public class Player : Entity
 
     private void FixedUpdate()
     {
-        if (!pv.IsMine) return;
+        if (!pv.IsMine || !canMove) return;
 
         if (isRequestingContact)
         {
@@ -268,6 +268,11 @@ public class Player : Entity
 
             if (requestTime == 0)
             {
+                if (userData == null)
+                {
+                    Debug.LogError("User data is null");
+                }
+                
                 if (!SocialManager.Instance.IsReceivingContactRequest)
                 {
                     SocialManager.Instance.ContactRequest(contactRequest.GetComponentInParent<Player>());
@@ -279,6 +284,16 @@ public class Player : Entity
                 }
             }
         }
+    }
+
+    public void Stop()
+    {
+        canMove = false;
+    }
+    
+    public void Resume()
+    {
+        canMove = true;
     }
 
     #region Controller Input Handling
@@ -364,10 +379,8 @@ public class Player : Entity
 
             SocialManager.Instance.ClearContactRequest();
         }
-        
-        Debug.Log("Contact request time out");
     }
-    
+
     private void HandleRaycast()
     {
         RaycastHit hit;
@@ -384,18 +397,24 @@ public class Player : Entity
                 }
                 else
                 {
+                    if (requestTime > 0)
+                    {
+                        isRequestingContact = false;
+                        requestTime = startedRequestTime;
+                    
+                        contactRequest = null;
+                    }
+                }
+            }
+            else
+            {
+                if (requestTime > 0)
+                {
                     isRequestingContact = false;
                     requestTime = startedRequestTime;
                     
                     contactRequest = null;
                 }
-            }
-            else
-            {
-                isRequestingContact = false;
-                requestTime = startedRequestTime;
-                
-                contactRequest = null;
             }
         }
     }
@@ -495,14 +514,25 @@ public class Player : Entity
     [PunRPC]
     void AcceptContactRequestRPC()
     {
-        //TODO: Open the new contact menu
-        Debug.Log("Contact request accepted");
+        MenuManager.Instance.OpenMenu(Menu.CONTACT_REQUEST);
         
-        MenuManager.Instance.PopUp("Contact request accepted");
-        
-        StopAllCoroutines();
+        isRequestingContact = false;
     }
     #endregion
+
+    public void AddContact(Contact contact)
+    {
+        if (userData == null)
+        {
+            Debug.LogError("User data is null");
+        }
+
+        userData.AddToContact(contact);
+
+        MenuManager.Instance.PopUp("Contact added succesfully");
+        
+        requestTime = startedRequestTime;
+    }
     
     public void EnableVideo()
     {
