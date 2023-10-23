@@ -1,4 +1,7 @@
-﻿public abstract class SuperiorClothe: Clothe
+﻿using UnityEngine;
+
+[CreateAssetMenu(fileName = "SuperiorClothe", menuName = "Items/Clothes/SuperiorClothe", order = 1)]
+public class SuperiorClothe: Clothe
 {
         
 }

@@ -1,4 +1,7 @@
-﻿public abstract class SpecialGun: Gun
+﻿using UnityEngine;
+
+[CreateAssetMenu(fileName = "SpecialGun", menuName = "Items/Guns/SpecialGun", order = 1)]
+public class SpecialGun: Gun
 {
         
 }

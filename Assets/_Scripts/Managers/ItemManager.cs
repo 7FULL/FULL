@@ -44,6 +44,11 @@ public class ItemManager: MonoBehaviour
         
         return items[randomItem];
     }
+    
+    public Item GetItem(ItemData itemData)
+    {
+        return items[(Items) System.Enum.Parse(typeof(Items), itemData.name)];
+    }
 
     public Item GetRandomItem(ItemRarity[] rarities)
     {

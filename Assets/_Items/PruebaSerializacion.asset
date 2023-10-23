@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7e6751a464a41b88cc96aacea8f6fc9, type: 3}
+  m_Name: PruebaSerializacion
+  m_EditorClassIdentifier: 
+  Id: 3ff1186d-be55-4fac-b43d-c572f94c93a1
+  _name: Prueba
+  _rarity: 0
+  _maxQuantity: 23
+  _prefab: {fileID: 0}
+  _sprite: {fileID: 0}

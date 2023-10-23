@@ -11,16 +11,21 @@ public class UserData
 
     private string id;
     
+    private ItemData[] items;
+    
+    public ItemData[] Items => items;
+    
     public int Coins => coins;
     
     private ApiClient api;
     
-    public UserData(Contact[] contacts, int coins, string id, ApiClient api)
+    public UserData(Contact[] contacts, int coins, string id, ApiClient api, ItemData[] items)
     {
         this.contacts = contacts;
         this.coins = coins;
         this.id = id;
         this.api = api;
+        this.items = items;
         
         Check();
     }
@@ -59,6 +64,14 @@ public class UserData
             foreach (Contact contact in contacts)
             {
                 result += contact.ToString() + "\n";
+            }
+        }
+
+        if (items.Length > 0)
+        {
+            foreach (ItemData item in items)
+            {
+                result += item.ToString() + "\n";
             }
         }
         
@@ -102,12 +115,20 @@ public class UserData
         //Close the menu
         MenuManager.Instance.CloseMenu();
     }
-
-    public void RemoveContact(Contact contact)
-    {
-        //TODO: Remove it from the database
-    }
     
+    public void AddItem(ItemData item)
+    {
+        ItemData[] newItems = new ItemData[items.Length + 1];
+        
+        for (int i = 0; i < items.Length; i++)
+        {
+            newItems[i] = items[i];
+        }
+        
+        newItems[newItems.Length - 1] = item;
+        
+        items = newItems;
+    }
     
     //TODO: Everytime we do something with the coins we should do it in the back
 }
@@ -118,11 +139,14 @@ public class UserDataResponse
     public ContactResponse[] contacts;
     
     public int coins;
+    
+    public ItemData[] items;
 
-    public UserDataResponse(ContactResponse[] contacts, int coins)
+    public UserDataResponse(ContactResponse[] contacts, int coins, ItemData[] items)
     {
         this.contacts = contacts;
         this.coins = coins;
+        this.items = items;
     }
     
     public UserData ToUserData(ApiClient api, string id)
@@ -134,7 +158,13 @@ public class UserDataResponse
             newContacts[i] = contacts[i].ToContact();
         }
         
-        UserData userData = new UserData(newContacts, coins, id, api);
+        //Dev only
+        foreach (ItemData item in items)
+        {
+            Debug.Log(item);
+        }
+        
+        UserData userData = new UserData(newContacts, coins, id, api, items);
         
         return userData;
     }

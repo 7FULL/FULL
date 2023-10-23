@@ -289,6 +289,18 @@ public class SocialManager : MonoBehaviour
         isReceivingContactRequest = true;
         
         requestContact = player;
+        
+        //Check if the player is already in the contact list
+        Contact[] contacts = GameManager.Instance.Player.Contacts;
+        
+        foreach (Contact contact in contacts)
+        {
+            if (contact.ID == player.ID)
+            {
+                MenuManager.Instance.PopUp("Player already in contact list");
+                return;
+            }
+        }
 
         GameManager.Instance.Player.PV.RPC("ReciveContactRequestRPC", player.PV.Controller, GameManager.Instance.Player.ID);
         

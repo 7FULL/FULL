@@ -1,9 +1,8 @@
 ﻿using UnityEngine;
 
-[CreateAssetMenu(fileName = "Item", menuName = "ScriptableObjects/Item", order = 1)]
-public abstract class Item: ScriptableObject
+[CreateAssetMenu(fileName = "Item", menuName = "Items/Item", order = 3)]
+public class Item: UniqueScriptableObject
 {
-    
     [SerializeField]
     [InspectorName("Name")]
     private string _name;
@@ -11,10 +10,6 @@ public abstract class Item: ScriptableObject
     [SerializeField]
     [InspectorName("Rarity")]
     private ItemRarity _rarity;
-    
-    [SerializeField]
-    [InspectorName("Quantity")]
-    private int _quantity;
     
     [SerializeField]
     [InspectorName("Max Quantity")]
@@ -33,7 +28,6 @@ public abstract class Item: ScriptableObject
     public GameObject Prefab => _prefab;
     public Sprite Sprite => _sprite;
     public ItemRarity Rarity => _rarity;
-    public int Quantity => _quantity;
     public int MaxQuantity => _maxQuantity;
 
     public override string ToString()
@@ -41,7 +35,6 @@ public abstract class Item: ScriptableObject
         string itemString = "";
         itemString += "Name: " + _name + "\n";
         itemString += "Rarity: " + _rarity + "\n";
-        itemString += "Quantity: " + _quantity + "\n";
         itemString += "Max Quantity: " + _maxQuantity + "\n";
         return itemString;
     }
@@ -59,7 +52,6 @@ public abstract class Item: ScriptableObject
         // We change the object
         _name = item.Name;
         _rarity = item.Rarity;
-        _quantity = item.Quantity;
         _maxQuantity = item.MaxQuantity;
         _prefab = item.Prefab;
         _sprite = item.Sprite;
@@ -80,17 +72,36 @@ public abstract class Item: ScriptableObject
     }
 }
 
+//Serializable class to save the data of the item
 [System.Serializable]
-public struct Display
+public class ItemData
 {
-    [SerializeField]
-    [InspectorName("Prefab")]
-    private GameObject _prefab;
+    public string id;
+    public string name;
+    public ItemRarity rarity;
+    public int quantity;
     
-    [SerializeField]
-    [InspectorName("Sprite")]
-    private Sprite _sprite;
+    public ItemData(string name, ItemRarity rarity, int quantity, string id)
+    {
+        this.name = name;
+        this.rarity = rarity;
+        this.quantity = quantity;
+        this.id = id;
+    }
     
-    public GameObject Prefab => _prefab;
-    public Sprite Sprite => _sprite;
+    public ItemData(string name, ItemRarity rarity, int quantity)
+    {
+        this.name = name;
+        this.rarity = rarity;
+        this.quantity = quantity;
+    }
+    
+    public override string ToString()
+    {
+        string itemString = "";
+        itemString += "Name: " + name + "\n";
+        itemString += "Rarity: " + rarity + "\n";
+        itemString += "Quantity: " + quantity + "\n";
+        return itemString;
+    }
 }

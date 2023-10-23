@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 
-public abstract class Gun: Item
+[CreateAssetMenu(fileName = "Gun", menuName = "Items/Guns/Gun", order = 1)]
+public class Gun: Item
 {
     private int _damage;
     private int _magazineSize;
@@ -41,8 +42,8 @@ public abstract class Gun: Item
         itemString += "Is Reloading: " + _isReloading + "\n";
         return itemString;
     }
-    
-    public abstract void Use();
-    
-    public abstract void Reload();
+
+    public virtual void Use(){}
+
+    public virtual void Reload() {}
 }

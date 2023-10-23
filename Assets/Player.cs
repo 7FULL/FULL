@@ -173,6 +173,18 @@ public class Player : Entity
             }
         }
     }
+    
+    private void RefreshItems()
+    {
+        ItemData[] itemsAux = userData.Items;
+        
+        foreach (ItemData item in itemsAux)
+        {
+            string idAux = ItemManager.Instance.GetItem(item).Id;
+
+            item.id = idAux;
+        }
+    }
 
     private async void GetUserInfo()
     {
@@ -206,8 +218,12 @@ public class Player : Entity
         try
         {
             response = await api.Post("user", uniqueIdentifier);
+            Debug.Log(response);
 
-            userData = JsonUtility.FromJson<UserDataResponse>(response).ToUserData(api,id);
+            userData = JsonUtility.FromJson<UserDataResponse>(response)
+                .ToUserData(api,id);
+            
+            Debug.Log(userData);
         }
         catch (Exception e)
         {
@@ -231,6 +247,13 @@ public class Player : Entity
                 userData.AddToContact(new Contact(other.PV, "Frederico", other.ID));
             }
         #endregion*/
+        
+        RefreshContacts();
+        
+        RefreshItems();
+        
+        // We save the data every 5 min
+        InvokeRepeating("SaveObjectsData", 300, 300);
     }
 
     private void Update()
@@ -239,8 +262,6 @@ public class Player : Entity
 
         HandleCharacterInput();
         
-        TestCall();
-        
         HandleCallCanvas();
         
         HandleVoidTP();
@@ -248,11 +269,12 @@ public class Player : Entity
         HandleMouseFocus();
         
         HandleRaycast();
-
-        if (Input.GetKeyDown(KeyCode.P))
-        {
-            RefreshContacts();
-        }
+        
+        //DevCall();
+        
+        //DevRefreshContacts();
+        
+        //DevAddObject();
     }
 
     private void FixedUpdate()
@@ -445,11 +467,29 @@ public class Player : Entity
         }
     }
     
-    private void TestCall()
+    private void DevCall()
     {
         if (Input.GetKeyDown(KeyCode.U))
         {
             SocialManager.Instance.Call(userData.Contacts[0], true);
+        }
+    }
+
+    private void DevRefreshContacts()
+    {
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            RefreshContacts();
+        }
+    }
+    
+    private void DevAddObject()
+    {
+        if (Input.GetKeyDown(KeyCode.O))
+        {
+            userData.AddItem(new ItemData("Prueba", ItemRarity.Common, 1));
+            
+            SaveObjectsData();
         }
     }
 
@@ -556,5 +596,45 @@ public class Player : Entity
         api.Post("user/restore", id);
         
         userData.Reset();
+    }
+    
+    //Every 5 min we save the objects of the player
+    private void SaveObjectsData()
+    {
+        string itemsJson = "[";
+        
+        if (userData.Items.Length > 0)
+        {
+            foreach (ItemData item in userData.Items)
+            {
+                itemsJson += JsonUtility.ToJson(item) + ",";
+            }
+            
+            itemsJson = itemsJson.Remove(itemsJson.Length - 1);
+        }
+        
+        itemsJson += "]";
+        
+        string json = "{";
+        json +=  "\"data\":" + itemsJson + ",";
+        json +=  "\"user\": \"" + id + "\"";
+        json += "}";
+        
+        api.Post("objects/update", json);
+    }
+    
+    private void OnApplicationQuit()
+    {
+        SaveObjectsData();
+    }
+    
+    public void AddItem(ItemData item)
+    {
+        //We obtain the item id and change it
+        string idAux = ItemManager.Instance.GetItem(item).Id;
+        
+        item.id = idAux;
+        
+        userData.AddItem(item);
     }
 }
