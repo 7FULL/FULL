@@ -18,8 +18,7 @@ public class Player : Entity
     [SerializeField]
     private ExampleCharacterController Character;
     
-    [SerializeField]
-    private ExampleCharacterCamera CharacterCamera;
+    public ExampleCharacterCamera CharacterCamera;
 
     private const string MouseXInput = "Mouse X";
     private const string MouseYInput = "Mouse Y";
@@ -229,9 +228,8 @@ public class Player : Entity
             else
             {
                 //We add the items to the inventory
-                foreach (ItemData item in userData.Items)
+                foreach (SerializableItemData item in userData.Items)
                 {
-                    Debug.Log(item);
                     inventory.AddItem(item);
                 }
             }
@@ -647,7 +645,7 @@ public class Player : Entity
     //Every 5 min we save the objects of the player
     private void SaveObjectsData()
     {
-        ItemData[] itemsAux = inventory.GetItems();
+        SerializableItemData[] itemsAux = inventory.GetItems();
         
         if (itemsAux != null)
         {
@@ -655,7 +653,7 @@ public class Player : Entity
         
             if (itemsAux.Length > 0)
             {
-                foreach (ItemData item in itemsAux)
+                foreach (SerializableItemData item in itemsAux)
                 {
                     itemsJson += JsonUtility.ToJson(item) + ",";
                 }

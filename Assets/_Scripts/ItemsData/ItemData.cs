@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
 using UnityEngine.Serialization;
 
-public abstract class ItemScriptableObject: ScriptableObject
+[CreateAssetMenu(fileName = "Item", menuName = "Items/Item", order = 0)]
+public abstract class ItemData: ScriptableObject
 {
     [InspectorName("Name")]
     public Items name;
@@ -20,6 +21,10 @@ public abstract class ItemScriptableObject: ScriptableObject
     
     [InspectorName("Category")]
     public ItemCategory category;
-
-    public abstract Item ToModel();
+    
+    //To string
+    public override string ToString()
+    {
+        return "Name: " + name + "\nQuality: " + quality + "\nMax Quantity: " + maxQuantity + "\nPrefab: " + prefab + "\nSprite: " + sprite + "\nCategory: " + category;
+    }
 }

@@ -1,66 +1,99 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 [CreateAssetMenu(fileName = "Gun", menuName = "Items/Guns/Gun", order = 1)]
 public class Gun: Item
 {
-    private int _damage;
-    private int _magazineSize;
-    private int _currentAmmo;
-    private int _maxAmmo;
-    private float _reloadTime;
-    private float _fireRate;
-    private float _nextTimeToFire;
-    private bool _isReloading;
-    private Transform _firePoint;
-    private int _maxMagazines;
-
-    public int Damage => _damage;
-    public int MagazineSize => _magazineSize;
-    public int CurrentAmmo => _currentAmmo;
-    public int MaxAmmo => _maxAmmo;
-    public float ReloadTime => _reloadTime;
-    public float FireRate => _fireRate;
-    public float NextTimeToFire => _nextTimeToFire;
-    public bool IsReloading => _isReloading;
-    public Transform FirePoint => _firePoint;
-     
-    public int MaxMagazines => _maxMagazines;
-
-    // We need this function because depends is VR or not the fire point is different (it changes between the camera and the gun)
-    public void InitializeFirePoint(Transform firePoint)
-    {
-        _firePoint = firePoint;
-    }
+    private GunData GunData;
     
-    public override string ToString()
+    private int leftAmmo = -1;
+    private int currentAmmo = -1;
+    
+    public int LeftAmmo => leftAmmo;
+    public int CurrentAmmo => currentAmmo;
+    
+    [SerializeField]
+    [InspectorName("Muzzle Flash")]
+    private Transform _muzzleFlash;
+    
+    [SerializeField]
+    [InspectorName("Use Muzzle Flash")]
+    private bool useMuzzleFlash;
+    
+    private float shootTimer;
+
+    private void Initialize()
     {
-        string itemString = base.ToString();
-        itemString += "Damage: " + _damage + "\n";
-        itemString += "Magazine Size: " + _magazineSize + "\n";
-        itemString += "Current Ammo: " + _currentAmmo + "\n";
-        itemString += "Max Ammo: " + _maxAmmo + "\n";
-        itemString += "Reload Time: " + _reloadTime + "\n";
-        itemString += "Fire Rate: " + _fireRate + "\n";
-        itemString += "Next Time To Fire: " + _nextTimeToFire + "\n";
-        itemString += "Is Reloading: " + _isReloading + "\n";
-        itemString += "Max Magazines: " + _maxMagazines + "\n";
-        return itemString;
+        GunData = (GunData) ItemData;
+        
+        leftAmmo = GunData.magazineSize * GunData.maxMagazines;
+        currentAmmo = GunData.magazineSize;
+        
+        shootTimer = 0;
     }
 
-    public virtual void Use(){}
-
-    public virtual void Reload() {}
-    
-    //Constructor based on a ScriptableObject
-    public Gun(GunScriptableObject gunScriptableObject): base(gunScriptableObject)
+    public virtual void Reload()
     {
-        _damage = gunScriptableObject.damage;
-        _magazineSize = gunScriptableObject.magazineSize;
-        _maxAmmo = gunScriptableObject.maxAmmo;
-        _reloadTime = gunScriptableObject.reloadTime;
-        _fireRate = gunScriptableObject.fireRate;
-        _maxMagazines = gunScriptableObject.maxMagazines;
+        //TODO: Do it using reload time
+        if (leftAmmo > 0)
+        {
+            leftAmmo -= GunData.magazineSize;
+            currentAmmo = GunData.magazineSize;
+        }
+        else
+        {
+            //TODO: Play empty sound
+        }
     }
+    public virtual void Aim(){}
+    public virtual void UnAim(){}
     
-    public Gun(){}
+    public override void Use()
+    {
+        Shoot();
+    }
+
+    public virtual void Shoot()
+    {
+        if (currentAmmo == -1 || leftAmmo == -1)
+        {
+            Initialize();
+        }
+        
+        if (currentAmmo > 0)
+        {
+            Debug.Log("Shoot timer: " + shootTimer);
+            if (GunData.fireRate <= shootTimer)
+            {
+                Debug.Log("Shoot");
+                    
+                shootTimer = 0;
+                
+                currentAmmo--;
+
+                if (Physics.Raycast(GameManager.Instance.Player.CharacterCamera.transform.position, GameManager.Instance.Player.CharacterCamera.transform.forward, out RaycastHit hit))
+                {
+                    Debug.Log(hit.collider.gameObject.name);
+                    
+                    if (hit.collider.gameObject.CompareTag("Player"))
+                    {
+                        Debug.Log("Hit player");
+                        
+                        hit.collider.gameObject.GetComponent<Entity>().TakeDamage(GunData.damage);
+                    }
+                }
+                
+                //TODO: Activate muzzle flash particles
+            }
+        }
+        else
+        {
+            Reload();
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        shootTimer += Time.deltaTime;
+    }
 }

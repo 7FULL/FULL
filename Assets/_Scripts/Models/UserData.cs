@@ -11,15 +11,15 @@ public class UserData
 
     private string id;
     
-    private ItemData[] items;
+    private SerializableItemData[] items;
     
-    public ItemData[] Items => items;
+    public SerializableItemData[] Items => items;
     
     public int Coins => coins;
     
     private ApiClient api;
     
-    public UserData(Contact[] contacts, int coins, string id, ApiClient api, ItemData[] items)
+    public UserData(Contact[] contacts, int coins, string id, ApiClient api, SerializableItemData[] items)
     {
         this.contacts = contacts;
         this.coins = coins;
@@ -69,7 +69,7 @@ public class UserData
 
         if (items.Length > 0)
         {
-            foreach (ItemData item in items)
+            foreach (SerializableItemData item in items)
             {
                 result += item.ToString() + "\n";
             }
@@ -116,16 +116,16 @@ public class UserData
         MenuManager.Instance.CloseMenu();
     }
     
-    public void AddItem(ItemData item)
+    public void AddItem(SerializableItemData serializableItem)
     {
-        ItemData[] newItems = new ItemData[items.Length + 1];
+        SerializableItemData[] newItems = new SerializableItemData[items.Length + 1];
         
         for (int i = 0; i < items.Length; i++)
         {
             newItems[i] = items[i];
         }
         
-        newItems[newItems.Length - 1] = item;
+        newItems[newItems.Length - 1] = serializableItem;
         
         items = newItems;
     }
@@ -140,9 +140,9 @@ public class UserDataResponse
     
     public int coins;
     
-    public ItemData[] items;
+    public SerializableItemData[] items;
 
-    public UserDataResponse(ContactResponse[] contacts, int coins, ItemData[] items)
+    public UserDataResponse(ContactResponse[] contacts, int coins, SerializableItemData[] items)
     {
         this.contacts = contacts;
         this.coins = coins;
@@ -159,7 +159,7 @@ public class UserDataResponse
         }
         
         //Dev only
-        foreach (ItemData item in items)
+        foreach (SerializableItemData item in items)
         {
             Debug.Log(item);
         }

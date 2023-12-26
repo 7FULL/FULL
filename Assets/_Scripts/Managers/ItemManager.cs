@@ -7,7 +7,7 @@ public class ItemManager: MonoBehaviour
     public static ItemManager Instance { get; private set; }
     
     //List of all items
-    public List<ItemScriptableObject> Items { get; private set; }
+    public List<ItemData> Items { get; private set; }
     
     private void Awake()
     {
@@ -19,15 +19,15 @@ public class ItemManager: MonoBehaviour
         LoadItems();
     }
     
-    //This function will load all items ( ScriptableObjects ) from the Resources folder
+    //This function will load all items ( ItemsData ) from the Resources folder
     public void LoadItems()
     {
-        Items = new List<ItemScriptableObject>();
-        var items = Resources.LoadAll("Items", typeof(ItemScriptableObject));
+        Items = new List<ItemData>();
+        var items = Resources.LoadAll("Items", typeof(ItemData));
         
         foreach (var item in items)
         {
-            Items.Add((ItemScriptableObject) item);
+            Items.Add((ItemData) item);
         }
     }
 
@@ -41,13 +41,13 @@ public class ItemManager: MonoBehaviour
         throw new System.NotImplementedException();
     }
     
-    public Item GetItem(Items item)
+    public ItemData GetItem(Items item)
     {
         for (int i = 0; i < Items.Count; i++)
         {
             if (Items[i].name == item)
             {
-                return Items[i].ToModel();
+                return Items[i];
             }
         }
         

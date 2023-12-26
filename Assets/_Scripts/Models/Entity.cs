@@ -32,6 +32,8 @@ public abstract class Entity: MonoBehaviour
         {
             Die();
         }
+        
+        Debug.Log($"Health: {_health}, Armor: {_armor}");
     }
 
     public void Heal(int amount)
@@ -58,10 +60,20 @@ public abstract class Entity: MonoBehaviour
         RestoreArmor(armorAmount);
     }
     
+    //TODO: This doesnt seem very secure
     public void RestoreAll()
     {
         RestoreHealthAndArmor(_maxHealth, _maxArmor);
     }
     
     public abstract void Die();
+    
+    //Initialize
+    public void Initialize(int health, int armor)
+    {
+        _health = health;
+        _maxHealth = health;
+        _armor = armor;
+        _maxArmor = armor;
+    }
 }

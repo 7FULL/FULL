@@ -21,6 +21,10 @@ public class Inventory : MenuUtils
     public bool IsOpen => isOpen;
     
     private List<Item> items = new List<Item>();
+    
+    [SerializeField]
+    [InspectorName("Inventory container")]
+    private GameObject inventoryContainer;
         
     private void Awake()
     {
@@ -71,9 +75,9 @@ public class Inventory : MenuUtils
         }
     }
     
-    public ItemData[] GetItems()
+    public SerializableItemData[] GetItems()
     {
-        ItemData[] itemsData = new ItemData[items.Count];
+        SerializableItemData[] itemsData = new SerializableItemData[items.Count];
         
         for (int i = 0; i < items.Count; i++)
         {
@@ -85,13 +89,15 @@ public class Inventory : MenuUtils
     
     public void AddItem(Items item)
     {
-        //We search for the item in the dictionary and add the item to the list
-        Item itemToAdd = ItemManager.Instance.GetItem(item);
+        Item itemToAdd = Instantiate(ItemManager.Instance.GetItem(item).prefab, inventoryContainer.transform).GetComponent<Item>();
         items.Add(itemToAdd);
     }
     
-    public void AddItem(ItemData itemData)
+    public void AddItem(SerializableItemData serializableItemData)
     {
-        items.Add(ItemManager.Instance.GetItem(itemData.name));
+        ItemData itemData = ItemManager.Instance.GetItem(serializableItemData.name);
+        Item itemToAdd = Instantiate(itemData.prefab, inventoryContainer.transform).GetComponent<Item>();
+        itemToAdd.Initialize(itemData, serializableItemData.quantity);
+        items.Add(itemToAdd);
     }
 }

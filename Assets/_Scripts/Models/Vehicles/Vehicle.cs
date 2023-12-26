@@ -9,15 +9,8 @@ public class Vehicle: Item
     private float _braking;
     private float _weight;
     
-    //Constructor based on VehicleScriptableObject
-    public Vehicle(VehicleScriptableObject vehicleScriptableObject)
+    public override void Use()
     {
-        _speed = vehicleScriptableObject.speed;
-        _acceleration = vehicleScriptableObject.acceleration;
-        _handling = vehicleScriptableObject.handling;
-        _braking = vehicleScriptableObject.braking;
-        _weight = vehicleScriptableObject.weight;
+        throw new System.NotImplementedException();
     }
-    
-    public Vehicle(){}
 }
