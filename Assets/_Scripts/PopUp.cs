@@ -1,4 +1,5 @@
-﻿using TMPro;
+﻿using System;
+using TMPro;
 using UnityEngine;
 
 public class PopUp: MenuUtils
@@ -15,7 +16,12 @@ public class PopUp: MenuUtils
     {
         HasAnimation = true;
     }
-    
+
+    private void Start()
+    {
+        MenuManager.Instance.SetPopUp(this);
+    }
+
     public override void OpenAnimation()
     {
         _animator.SetBool("IsOpen", true);

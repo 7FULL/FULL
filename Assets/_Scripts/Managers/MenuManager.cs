@@ -32,6 +32,7 @@ public class MenuManager: MonoBehaviour
     /// <param name="keepFocus">If true, the mouse will not be focused on the menu</param>
     public void OpenMenu(Menu menu, bool keepFocus = false)
     {
+        Debug.Log("Lo que sea: " + menu);
         foreach (MenuStruct menuStruct in menus)
         {
             if (menuStruct.MenuType == menu)
@@ -69,7 +70,7 @@ public class MenuManager: MonoBehaviour
         // Free the mouse
         if (!keepFocus)
         {
-            Cursor.lockState = CursorLockMode.None;
+            Cursor.lockState = CursorLockMode.Confined;
             Cursor.visible = true;
             
             GameManager.Instance.Player.Stop();
@@ -110,8 +111,15 @@ public class MenuManager: MonoBehaviour
         }   
     }
     
+    public void SetPopUp(PopUp popup)
+    {
+        this.popup = popup;
+    }
+    
     public void PopUp(string message)
     {
+        CloseMenu();
+        
         popup.Configure(message);
         popup.OpenAnimation();
         

@@ -6,7 +6,8 @@ public class ItemManager: MonoBehaviour
     //Singleton
     public static ItemManager Instance { get; private set; }
     
-    public EditorDictionary<Items,Item> items = new EditorDictionary<Items,Item>();
+    //List of all items
+    public List<ItemScriptableObject> Items { get; private set; }
     
     private void Awake()
     {
@@ -14,69 +15,42 @@ public class ItemManager: MonoBehaviour
         {
             Instance = this;
         }
+        
+        LoadItems();
+    }
+    
+    //This function will load all items ( ScriptableObjects ) from the Resources folder
+    public void LoadItems()
+    {
+        Items = new List<ItemScriptableObject>();
+        var items = Resources.LoadAll("Items", typeof(ItemScriptableObject));
+        
+        foreach (var item in items)
+        {
+            Items.Add((ItemScriptableObject) item);
+        }
+    }
+
+    public void DropItem(Item item, Vector3 position)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public void DestroyItem(Item item)
+    {
+        throw new System.NotImplementedException();
     }
     
     public Item GetItem(Items item)
     {
-        return items[item];
-    }
-
-    public Item GetRandomItem()
-    {
-        Items randomItem = (Items) Random.Range(0, items.Count);
-        
-        return items[randomItem];
-    }
-
-    public Item GetRandomItem(ItemRarity rarity)
-    {
-        List<Items> itemsByRarity = new List<Items>();
-        
-        foreach (KeyValuePair<Items, Item> item in items)
+        for (int i = 0; i < Items.Count; i++)
         {
-            if (item.Value.Rarity == rarity)
+            if (Items[i].name == item)
             {
-                itemsByRarity.Add(item.Key);
+                return Items[i].ToModel();
             }
         }
         
-        Items randomItem = itemsByRarity[Random.Range(0, itemsByRarity.Count)];
-        
-        return items[randomItem];
-    }
-    
-    public Item GetItem(ItemData itemData)
-    {
-        return items[(Items) System.Enum.Parse(typeof(Items), itemData.name)];
-    }
-
-    public Item GetRandomItem(ItemRarity[] rarities)
-    {
-        List<Items> itemsByRarity = new List<Items>();
-        
-        foreach (KeyValuePair<Items, Item> item in items)
-        {
-            foreach (ItemRarity rarity in rarities)
-            {
-                if (item.Value.Rarity == rarity)
-                {
-                    itemsByRarity.Add(item.Key);
-                }
-            }
-        }
-        
-        Items randomItem = itemsByRarity[Random.Range(0, itemsByRarity.Count)];
-        
-        return items[randomItem];
-    }
-    
-    public void DropItem(Item item, Vector3 position)
-    {
-        Instantiate(item.Prefab, position, Quaternion.identity);
-    }
-    
-    public void DestroyItem(Item item)
-    {
-        // TODO: Clean the item in the inventory
+        return null;
     }
 }

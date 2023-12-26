@@ -34,7 +34,12 @@ public class SocialManager : MonoBehaviour
     
     private bool isReceivingContactRequest = false;
     
-    public bool IsReceivingContactRequest => isReceivingContactRequest;
+    public bool IsReceivingContactRequest
+    {
+        get => isReceivingContactRequest;
+        set { isReceivingContactRequest = value; }
+    }
+
     public bool IsCalling => isCalling;
     public bool IsOnCall => isOnCall;
     public bool IsBeingCalled => contact != null;
@@ -75,26 +80,43 @@ public class SocialManager : MonoBehaviour
         rtcEngine.SetClientRole(CLIENT_ROLE_TYPE.CLIENT_ROLE_BROADCASTER);
         
     }
-
-    //TODO: Check if player is available before calling
+    
     public void Call(Contact playerToCall, bool videoCall = false)
     {
-        contact = playerToCall;
+        if (playerToCall.PV != null)
+        {
+            if (isCalling)
+            {
+                Debug.Log("Already calling");
+                return;
+            }
+            
+            contact = playerToCall;
 
-        string channelName = PhotonNetwork.LocalPlayer.ActorNumber + "-" + Random.Range(1, 1000);
+            string channelToJoin = PhotonNetwork.LocalPlayer.ActorNumber + "-" + Random.Range(1, 1000);
 
-        StartCoroutine(CallTimeOut());
-        OnGoingCallMenu x = (OnGoingCallMenu)MenuManager.Instance.GetMenu(Menu.CALLING).Menu;
+            StartCoroutine(CallTimeOut());
+            OnGoingCallMenu x = (OnGoingCallMenu)MenuManager.Instance.GetMenu(Menu.CALLING).Menu;
         
-        x.Configure();
+            x.Configure();
+            
+            MenuManager.Instance.ToGame();
+            
+            channelName = channelToJoin;
 
-        MenuManager.Instance.OpenMenu(Menu.CALLING, true);
+            MenuManager.Instance.OpenMenu(Menu.CALLING, true);
 
-        GameManager.Instance.Player.PV.RPC("CallRPC", contact.PV.Controller, GameManager.Instance.Player.ID, channelName, videoCall);
+            GameManager.Instance.Player.PV.RPC("CallRPC", contact.PV.Controller, GameManager.Instance.Player.ID, channelToJoin, videoCall);
         
-        isVideoCall = videoCall;
+            isVideoCall = videoCall;
         
-        isCalling = true;
+            isCalling = true;
+        }
+        else
+        {
+            Debug.Log("Player not available");
+            MenuManager.Instance.PopUp("Player not available");
+        }
     }
 
     IEnumerator CallTimeOut(int seconds = 0)
@@ -129,7 +151,7 @@ public class SocialManager : MonoBehaviour
         isCalling = false;
     }
 
-    public void ReceiveCall(string callerID, string channelName, bool videoCall)
+    public void ReceiveCall(string callerID, string channelToJoin, bool videoCall)
     {
         // If we already have the player as contact, we don't send the request
         Contact[] contactsAux = GameManager.Instance.Player.Contacts;
@@ -152,7 +174,7 @@ public class SocialManager : MonoBehaviour
             
             GameManager.Instance.Player.PV.RPC("AcceptContactRequestRPC", player.PV.Controller, GameManager.Instance.Player.ID);
             
-            MenuManager.Instance.PopUp("A player that has you as a contact and you dont is calling you, add it first");
+            MenuManager.Instance.PopUp("A player that has you as a contact and you dont, is calling you, add it first");
             
             return;
         }
@@ -176,7 +198,7 @@ public class SocialManager : MonoBehaviour
             return;
         }
 
-        this.channelName = channelName;
+        channelName = channelToJoin;
         
         isVideoCall = videoCall;
          
@@ -212,6 +234,12 @@ public class SocialManager : MonoBehaviour
             return;
         }
         
+        //Si ya esta en una llamada, me salgo de la llamada
+        if (isOnCall)
+        {
+            LeaveCall();
+        }
+        
         if (isVideoCall)
         {
             contact.PV.gameObject.GetComponent<Player>().EnableVideo();
@@ -239,6 +267,8 @@ public class SocialManager : MonoBehaviour
         OnGoingCallMenu menu = (OnGoingCallMenu)menuStruct.Menu;
 
         menu.Configure();
+        
+        MenuManager.Instance.ToGame();   
         
         if(isVideoCall)
         {
@@ -279,9 +309,14 @@ public class SocialManager : MonoBehaviour
     
     public void ClearContactRequest()
     {
-        isReceivingContactRequest = false;
+        if (isReceivingContactRequest)
+        {
+            isReceivingContactRequest = false;
         
-        requestContact = null;
+            requestContact = null;
+        
+            Debug.LogError("ClearContactRequest");
+        }
     }
     
     public void ContactRequest(Player player)
@@ -331,6 +366,8 @@ public class SocialManager : MonoBehaviour
             GameManager.Instance.Player.PV.RPC("AcceptContactRequestRPC", requestContact.PV.Controller);
 
             MenuManager.Instance.OpenMenu(Menu.CONTACT_REQUEST);
+            
+            isReceivingContactRequest = false;
         }else{
             Debug.Log("Player not found");
         }
@@ -365,12 +402,12 @@ internal class UserEventHandler : IRtcEngineEventHandler
 
         public override void OnError(int err, string msg)
         {
-
+            Debug.Log("Error: " + err + " " + msg);
         }
 
         public override void OnJoinChannelSuccess(RtcConnection connection, int elapsed)
         {
-
+            Debug.Log("OnJoinChannelSuccess");
         }
 
         public override void OnRejoinChannelSuccess(RtcConnection connection, int elapsed)
@@ -390,12 +427,12 @@ internal class UserEventHandler : IRtcEngineEventHandler
 
         public override void OnUserJoined(RtcConnection connection, uint uid, int elapsed)
         {
-
+            Debug.Log("OnUserJoined");
         }
 
         public override void OnUserOffline(RtcConnection connection, uint uid, USER_OFFLINE_REASON_TYPE reason)
         {
-
+            Debug.Log("OnUserOffline");
         }
     }
 

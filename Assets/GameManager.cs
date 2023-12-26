@@ -28,6 +28,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         private Player player;
 
         private ApiClient apiClient = new ApiClient("http://localhost:3000/api/");
+        //private ApiClient apiClient = new ApiClient("https://full-apirest.onrender.com/api/");
         
         public ApiClient ApiClient => apiClient;
 
@@ -141,12 +142,16 @@ public class GameManager : MonoBehaviourPunCallbacks
         public void AddContact()
         {
 	        Player player = SocialManager.Instance.RequestContact;
+	        
+	        Debug.Log("Add contact" + player.ID + " " + contactInput.text);
 
 	        Contact contact = new Contact(contactInput.text, player.ID);
 	        
 	        contact.SetPV(player.PV);
 
 	        this.player.AddContact(contact);
+	        
+	        SocialManager.Instance.ClearContactRequest();
         }
 
         public override void OnJoinedRoom()

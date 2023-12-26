@@ -1,0 +1,6 @@
+﻿En caso de querer crear un objeto nuevo se tiene que hace lo siguiente:
+- Crear la clase en conrteto heredando de Item
+- Crear la clase scriptableObject correspondiente y heredar de ItemScriptableObject e implementar la interfaz IItemScriptableObject<T>
+- En caso de contener nuevo tipo o categaoria registrarla en el enum ItemType y ItemCategory
+- Crear los scriptableObjects de dicho objeto en la carpeta _Items
+- La clase creada tiene que tener un constructor que reciba un ItemScriptableObject

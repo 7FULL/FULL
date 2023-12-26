@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 
 // The class to create the dictionary in the inspector
-[CustomEditor(typeof(ItemManager))]
+//[CustomEditor(typeof(ItemManager))]
 public class DictionaryEditor : Editor
 {
     // The name of the dictionary
@@ -26,6 +26,7 @@ public class DictionaryEditor : Editor
         
         List<Items> keysToRemove = new List<Items>();
 
+        /*
         for (int i = 0; i < classToCustom.items.Count; i++)
         {
             EditorGUILayout.BeginHorizontal();
@@ -45,6 +46,7 @@ public class DictionaryEditor : Editor
                 classToCustom.items.SetValue(classToCustom.items.GetKey(i), newValue);
             }
         }
+        
 
         // Remove keys that have changed.
         foreach (var key in keysToRemove)
@@ -66,5 +68,6 @@ public class DictionaryEditor : Editor
             
             classToCustom.items.RemoveAt(classToCustom.items.Count - 1);
         }
+        */
     }
 }

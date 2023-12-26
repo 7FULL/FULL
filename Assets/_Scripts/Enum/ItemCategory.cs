@@ -1,0 +1,20 @@
+﻿public enum ItemCategory
+{
+    ITEM,
+    CLOTHE,
+    FOOT_CLOTHE,
+    HEAD_CLOTHE,
+    SUPERIOR_CLOTHE,
+    INFERIOR_CLOTHE,
+    GUN,
+    HAND_COMBACT_GUN,
+    DISTANCE_GUN,
+    MELEE_GUN,
+    SPECIAL_GUN,
+    TWO_WHEEL_VEHICLE,
+    FOUR_WHEEL_VEHICLE,
+    AERIAL_VEHICLE,
+    GROUND_VEHICLE,
+    VEHICLE,
+    UTIL,
+}
