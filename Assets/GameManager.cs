@@ -173,8 +173,12 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         public void TPToSpawn(Player player)
         {
-	        player.transform.position = spawnPoint.position;
-	        player.transform.rotation = spawnPoint.rotation;
+	        Destroy(player.gameObject);
+
+	        // we're in a room. spawn a character for the local player. it gets synced by using PhotonNetwork.Instantiate
+	        GameObject player2 = PhotonNetwork.Instantiate(this.playerPrefab.name, spawnPoint.position, spawnPoint.rotation, 0);
+		        
+	        this.player = player2.GetComponent<Player>();
         }
 
         IEnumerator WaitForVideo()

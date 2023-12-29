@@ -15,8 +15,7 @@ public class Player : Entity
     
     public string ID => id;
     
-    [SerializeField]
-    private ExampleCharacterController Character;
+    public ExampleCharacterController Character;
     
     public ExampleCharacterCamera CharacterCamera;
 
@@ -83,6 +82,14 @@ public class Player : Entity
     [SerializeField]
     private OverCanvas overCanvas;
     
+    [SerializeField]
+    [InspectorName("Minimap camera")]
+    private Camera minimapCamera;
+    
+    [SerializeField]
+    [InspectorName("Main canvas")]
+    private GameObject mainCanvas;
+    
     private bool canMove = true;
 
     private ApiClient api;
@@ -121,6 +128,8 @@ public class Player : Entity
 
         if (!pv.IsMine){
             CharacterCamera.gameObject.GetComponent<Camera>().enabled = false;
+            
+            minimapCamera.enabled = false;
 
             // Listener
             CharacterCamera.gameObject.GetComponent<AudioListener>().enabled = false;
@@ -183,7 +192,6 @@ public class Player : Entity
         }
     }
     
-
     private async void GetUserInfo()
     {
         string uniqueIdentifier = SystemInfo.deviceUniqueIdentifier;
@@ -267,7 +275,7 @@ public class Player : Entity
     {
         if (!pv.IsMine || !canMove) return;
 
-        DevAddObject();
+        //DevAddObject();
         
         HandleCharacterInput();
         
@@ -284,8 +292,6 @@ public class Player : Entity
         //DevCall();
         
         //DevRefreshContacts();
-        
-        //DevAddObject();
     }
 
     private void FixedUpdate()
@@ -428,7 +434,7 @@ public class Player : Entity
 
         if (Physics.Raycast(CharacterCamera.Transform.position, CharacterCamera.Transform.forward, out hit, maxReachDistance))
         {
-            if (hit.collider.gameObject.CompareTag("Player") && hit.collider.gameObject != this.gameObject)
+            if (hit.collider.gameObject.CompareTag("Player") && hit.collider.gameObject != this.gameObject && hit.collider.gameObject != Character.gameObject)
             {
                 Over("F", "Hold to add person as a contact");
                 
@@ -466,6 +472,11 @@ public class Player : Entity
         {
             overCanvas.gameObject.SetActive(false);
         }
+    }
+    
+    public void EnableMainCanvas()
+    {
+        mainCanvas.SetActive(true);
     }
 
     private void HandleInventory()

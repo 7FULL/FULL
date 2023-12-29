@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Inventory : MenuUtils
 {
@@ -25,6 +26,12 @@ public class Inventory : MenuUtils
     [SerializeField]
     [InspectorName("Inventory container")]
     private GameObject inventoryContainer;
+    
+    [SerializeField]
+    [InspectorName("Principal inventory slots")]
+    private Image[] principalInventorySlots;
+    
+    private Item currentItem;
         
     private void Awake()
     {
@@ -87,14 +94,34 @@ public class Inventory : MenuUtils
         return itemsData;
     }
     
-    public void AddItem(Items item)
+    public void AddItem(Items itemToAdd)
     {
-        Item itemToAdd = Instantiate(ItemManager.Instance.GetItem(item).prefab, inventoryContainer.transform).GetComponent<Item>();
-        items.Add(itemToAdd);
+        //If theres already an item with the same name, add it to the stack
+        foreach (Item item in items)
+        {
+            if (item.ItemData.name == itemToAdd)
+            {
+                item.Add(1);
+                return;
+            }
+        }
+        
+        Item itemToAddToInventory = Instantiate(ItemManager.Instance.GetItem(itemToAdd).prefab, inventoryContainer.transform).GetComponent<Item>();
+        items.Add(itemToAddToInventory);
     }
     
     public void AddItem(SerializableItemData serializableItemData)
     {
+        //If theres already an item with the same name, add it to the stack
+        foreach (Item item in items)
+        {
+            if (item.ItemData.name == serializableItemData.name)
+            {
+                item.Add(serializableItemData.quantity);
+                return;
+            }
+        }
+        
         ItemData itemData = ItemManager.Instance.GetItem(serializableItemData.name);
         Item itemToAdd = Instantiate(itemData.prefab, inventoryContainer.transform).GetComponent<Item>();
         itemToAdd.Initialize(itemData, serializableItemData.quantity);

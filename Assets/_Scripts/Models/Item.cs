@@ -27,6 +27,11 @@ public abstract class Item: MonoBehaviour
         return new SerializableItemData(_itemData.name, _itemData.quality, _itemData.category, _quantity);
     }
     
+    public void Add(int quantity)
+    {
+        _quantity += quantity;
+    }
+    
     //Use
     public abstract void Use();
 }
