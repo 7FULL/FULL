@@ -27,10 +27,6 @@ public class Player : Entity
     
     [SerializeField]
     private Animator animator;
-
-    private PhotonView pv;
-
-    public PhotonView PV => pv;
     
     [Tooltip("The name our player will have in the inspectior to identify it")]
     [InspectorName("Player Name")]
@@ -122,11 +118,9 @@ public class Player : Entity
         CharacterCamera.IgnoredColliders.Clear();
         CharacterCamera.IgnoredColliders.AddRange(Character.GetComponentsInChildren<Collider>());
         
-        pv = GetComponent<PhotonView>();
-        
         videoCallCamera.enabled = false;
 
-        if (!pv.IsMine){
+        if (!PV.IsMine){
             CharacterCamera.gameObject.GetComponent<Camera>().enabled = false;
             
             minimapCamera.enabled = false;
@@ -217,7 +211,7 @@ public class Player : Entity
         api.Post("contact", json);
         */
         
-        pv.RPC("UpdateIDRPC", RpcTarget.AllBuffered, uniqueIdentifier);
+        PV.RPC("UpdateIDRPC", RpcTarget.AllBuffered, uniqueIdentifier);
 
         string response = "";
         
@@ -273,7 +267,7 @@ public class Player : Entity
 
     private void Update()
     {
-        if (!pv.IsMine || !canMove) return;
+        if (!PV.IsMine || !canMove) return;
 
         //DevAddObject();
         
@@ -288,15 +282,15 @@ public class Player : Entity
         HandleRaycast();
         
         HandleInventory();
-        
+
         //DevCall();
-        
+
         //DevRefreshContacts();
     }
 
     private void FixedUpdate()
     {
-        if (!pv.IsMine || !canMove) return;
+        if (!PV.IsMine || !canMove) return;
 
         if (isRequestingContact)
         {
@@ -347,7 +341,7 @@ public class Player : Entity
     
     private void LateUpdate()
     {
-        if (!pv.IsMine) return;
+        if (!PV.IsMine) return;
         
         // Handle rotating the camera along with physics movers
         if (CharacterCamera.RotateWithPhysicsMover && Character.Motor.AttachedRigidbody != null)

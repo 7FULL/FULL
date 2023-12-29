@@ -1,17 +1,29 @@
-﻿using UnityEngine;
+﻿using System;
+using Photon.Pun;
+using UnityEngine;
 
 public abstract class Entity: MonoBehaviour
 {
-    private int _health;
-    private int _maxHealth;
-    private int _armor;
-    private int _maxArmor;
+    private int _health = 1000;
+    private int _maxHealth = 1000;
+    private int _armor = 100;
+    private int _maxArmor = 100;
+    
+    private PhotonView pv;
+
+    public PhotonView PV => pv;
     
     public int Health => _health;
     public int MaxHealth => _maxHealth;
     public int Armor => _armor;
     public int MaxArmor => _maxArmor;
-    
+
+    private void Awake()
+    {
+        pv = GetComponent<PhotonView>();
+    }
+
+    [PunRPC]
     public void TakeDamage(int damage)
     {
         if (_armor > 0)
@@ -32,10 +44,13 @@ public abstract class Entity: MonoBehaviour
         {
             Die();
         }
-        
-        Debug.Log($"Health: {_health}, Armor: {_armor}");
     }
-
+    
+    public void TakeDamageRPC(int damage)
+    {
+        pv.RPC("TakeDamage", RpcTarget.All, damage);
+    }
+    
     public void Heal(int amount)
     {
         _health += amount;
@@ -69,11 +84,17 @@ public abstract class Entity: MonoBehaviour
     public abstract void Die();
     
     //Initialize
-    public void Initialize(int health, int armor)
+    [PunRPC]
+    private void Initialize(int health, int armor)
     {
         _health = health;
         _maxHealth = health;
         _armor = armor;
         _maxArmor = armor;
+    }
+    
+    public void InitializeRPC(int health, int armor)
+    {
+        pv.RPC("Initialize", RpcTarget.All, health, armor);
     }
 }

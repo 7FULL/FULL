@@ -62,7 +62,6 @@ public class Gun: Item
         
         if (currentAmmo > 0)
         {
-            Debug.Log("Shoot timer: " + shootTimer);
             if (GunData.fireRate <= shootTimer)
             {
                 Debug.Log("Shoot");
@@ -79,7 +78,7 @@ public class Gun: Item
                     {
                         Debug.Log("Hit player");
                         
-                        hit.collider.gameObject.GetComponent<Entity>().TakeDamage(GunData.damage);
+                        hit.collider.gameObject.GetComponentInParent<Entity>().TakeDamageRPC(GunData.damage);
                     }
                 }
                 
