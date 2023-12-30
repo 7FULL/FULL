@@ -282,6 +282,8 @@ public class Player : Entity
         HandleRaycast();
         
         HandleInventory();
+        
+        Chat();
 
         //DevCall();
 
@@ -561,6 +563,14 @@ public class Player : Entity
             {
                 SocialManager.Instance.LeaveCall();
             }
+        }
+    }
+
+    private void Chat()
+    {
+        if (Input.GetKey(KeyCode.T))
+        {
+            ChatManager.Instance.FocusChat();
         }
     }
     

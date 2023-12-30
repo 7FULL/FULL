@@ -27,6 +27,8 @@ public class GameManager : MonoBehaviourPunCallbacks
         
         private Player player;
 
+        [SerializeField] private GameObject chat;
+
         private ApiClient apiClient = new ApiClient("http://localhost:3000/api/");
         //private ApiClient apiClient = new ApiClient("https://full-apirest.onrender.com/api/");
         
@@ -61,6 +63,11 @@ public class GameManager : MonoBehaviourPunCallbacks
 	        
 	        DontDestroyOnLoad(this.gameObject);
         }
+        
+        public void EnableChat()
+		{
+	        chat.SetActive(true);
+		}
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
 		{
