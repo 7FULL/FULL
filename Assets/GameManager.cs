@@ -36,8 +36,6 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         public Player Player => player;
         
-        [SerializeField] private Animation imageLoad;
-        
         [SerializeField] private VideoPlayer videoPlayer;
         
         [SerializeField] private GameObject loadingCanvas;
@@ -195,8 +193,6 @@ public class GameManager : MonoBehaviourPunCallbacks
 	        videoPlayer.gameObject.SetActive(false);
 	        
 	        loadingCanvas.SetActive(false);
-	        
-	        imageLoad.Play();
         }
 
         public override void OnConnectedToMaster()

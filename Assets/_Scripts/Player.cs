@@ -6,6 +6,7 @@ using KinematicCharacterController;
 using KinematicCharacterController.Examples;
 using Photon.Pun;
 using Photon.Pun.Demo.PunBasics;
+using TMPro;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -85,6 +86,10 @@ public class Player : Entity
     [SerializeField]
     [InspectorName("Main canvas")]
     private GameObject mainCanvas;
+    
+    [SerializeField]
+    [InspectorName("Coins text")]
+    private TMP_Text coinsText;
     
     private bool canMove = true;
 
@@ -235,6 +240,8 @@ public class Player : Entity
                     inventory.AddItem(item);
                 }
             }
+            
+            ShowFormattedCoins();
         }
         catch (Exception e)
         {
@@ -695,5 +702,44 @@ public class Player : Entity
     public void AddItem(Items item)
     {
         inventory.AddItem(item);
+    }
+    
+    public void AddCoins(int coins)
+    {
+        userData.AddCoins(coins);
+        
+        ShowFormattedCoins();
+    }
+    
+    private void ShowFormattedCoins()
+    {
+        int coins = userData.Coins;
+
+        string aux = "";
+        
+        if (coins < 1000)
+        {
+            aux = coins.ToString();
+        }
+        else if (coins < 1000000)
+        {
+            float kValue = coins / 1000f;
+            aux = kValue.ToString("F2") + " K";
+        }
+        else if (coins < 1000000000)
+        {
+            float mValue = coins / 1000000f;
+            aux = mValue.ToString("F2") + " M";
+        }
+        else
+        {
+            float bValue = coins / 1000000000f;
+            aux = bValue.ToString("F2") + " B";
+        }
+        
+        //We substitute the , for .
+        aux = aux.Replace(',', '.');
+        
+        coinsText.text = aux;
     }
 }
