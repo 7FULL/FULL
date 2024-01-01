@@ -4,21 +4,12 @@ using UnityEngine;
 
 public class OnGoingCallMenu: MenuUtils
 {
-    [InspectorName("Animator")]
-    [SerializeField]
-    private Animator _animator;
-    
     [InspectorName("Contact Name")]
     [SerializeField]
     private TMP_Text _contactName;
     private void Awake()
     {
         HasAnimation = true;
-    }
-
-    public override void OpenAnimation()
-    {
-        _animator.SetBool("IsOpen", true);
     }
     
     public void Configure(Contact contact = null)
@@ -33,10 +24,5 @@ public class OnGoingCallMenu: MenuUtils
         }
         
         _contactName.text = contact.Name;
-    }
-    
-    public override void CloseAnimation()
-    {
-        _animator.SetBool("IsOpen", false);
     }
 }

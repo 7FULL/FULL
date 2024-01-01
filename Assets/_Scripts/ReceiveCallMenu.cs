@@ -8,10 +8,6 @@ public class ReceiveCallMenu: MenuUtils
     [SerializeField]
     private TMP_Text _callerName;
 
-    [InspectorName("Animator")]
-    [SerializeField]
-    private Animator _animator;
-
     private void Awake()
     {
         HasAnimation = true;
@@ -20,15 +16,5 @@ public class ReceiveCallMenu: MenuUtils
     public void Configure()
     {
         _callerName.text = SocialManager.Instance.Contact.Name;
-    }
-    
-    public override void OpenAnimation()
-    {
-        _animator.SetBool("IsOpen", true);
-    }
-    
-    public override void CloseAnimation()
-    {
-        _animator.SetBool("IsOpen", false);
     }
 }

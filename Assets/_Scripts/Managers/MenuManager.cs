@@ -39,14 +39,10 @@ public class MenuManager: MonoBehaviour
             {
                 MenuUtils iMenu = menuStruct.MenuGameObject.GetComponent<MenuUtils>();
                 
-                if (iMenu == null || !iMenu.HasAnimation)
-                {
-                    menuStruct.MenuGameObject.SetActive(true);
-                }
-                else
-                {
-                    iMenu.OpenAnimation();
-                }
+                menuStruct.MenuGameObject.SetActive(true);
+                    
+                iMenu.OpenAnimation();
+                
                 currentMenu = menuStruct;
             }
             else
@@ -55,14 +51,7 @@ public class MenuManager: MonoBehaviour
                 {
                     MenuUtils iMenu = menuStruct.MenuGameObject.GetComponent<MenuUtils>();
                     
-                    if (iMenu == null || !iMenu.HasAnimation)
-                    {
-                        menuStruct.MenuGameObject.SetActive(false);
-                    }
-                    else
-                    {
-                        iMenu.CloseAnimation();
-                    }
+                    iMenu.CloseAnimation();
                 }
             }
         }
