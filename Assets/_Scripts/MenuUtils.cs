@@ -1,4 +1,5 @@
-﻿using DG.Tweening;
+﻿using System;
+using DG.Tweening;
 using UnityEngine;
 
 public class MenuUtils: MonoBehaviour
@@ -23,6 +24,26 @@ public class MenuUtils: MonoBehaviour
     {
         get => _hasAnimation;
         set => _hasAnimation = value;
+    }
+
+    private void Awake()
+    {
+        if (_hasAnimation)
+        {
+            transform.localScale = Vector3.zero;
+            
+            if (_doTranslation)
+            {
+                if (_horizontalAnimation)
+                {
+                    transform.localPosition = new Vector3(-1000, 0, 0);
+                }
+                else
+                {
+                    transform.localPosition = new Vector3(0, -1000, 0);
+                }
+            }
+        }
     }
 
     public virtual void OpenAnimation()

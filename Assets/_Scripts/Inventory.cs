@@ -5,10 +5,6 @@ using UnityEngine.UI;
 
 public class Inventory : MenuUtils
 {
-    [InspectorName("Animator")]
-    [SerializeField]
-    private Animator animator;
-    
     [InspectorName("Conocidos container")]
     [SerializeField]
     private GameObject conocidosContainer;
@@ -28,23 +24,20 @@ public class Inventory : MenuUtils
     private GameObject inventoryContainer;
     
     [SerializeField]
+    [InspectorName("Inventory slots")]
+    private ItemDisplay[] inventorySlots;
+    
+    [SerializeField]
     [InspectorName("Principal inventory slots")]
-    private Image[] principalInventorySlots;
+    private ItemDisplay[] principalInventorySlots;
     
     private Item currentItem;
+    
+    private int currentSlot = 0;
         
     private void Awake()
     {
         HasAnimation = true;
-    }
-    
-    //Close the inventory
-    public void Close()
-    {
-        if (isOpen)
-        {
-            CloseAnimation();
-        }
     }
     
     public void CloseOnCLick()
@@ -54,14 +47,17 @@ public class Inventory : MenuUtils
     
     public override void OpenAnimation()
     {
-        animator.SetBool("IsOpen", true);
+        base.OpenAnimation();
+        
         loadContacts();
+        
         isOpen = true;
     }
     
     public override void CloseAnimation()
     {
-        animator.SetBool("IsOpen", false);
+        base.CloseAnimation();
+        
         isOpen = false;
     }
 
@@ -126,5 +122,33 @@ public class Inventory : MenuUtils
         Item itemToAdd = Instantiate(itemData.prefab, inventoryContainer.transform).GetComponent<Item>();
         itemToAdd.Initialize(itemData, serializableItemData.quantity);
         items.Add(itemToAdd);
+    }
+
+    public void Initialize()
+    {
+        //Set all images of the slots to the items image
+        for (int i = 0; i < inventorySlots.Length; i++)
+        {
+            if (i < items.Count)
+            {
+                inventorySlots[i].Configure(items[i]);
+            }
+            else
+            {
+                inventorySlots[i].Configure(null);
+            }
+        }
+        
+        //Un select all slots and select the first one
+        foreach (ItemDisplay itemDisplay in principalInventorySlots)
+        {
+            itemDisplay.UnSelect();
+        }
+
+        if (items.Count > 0)
+        {
+            currentItem = items[0];
+            principalInventorySlots[0].Select();
+        }
     }
 }

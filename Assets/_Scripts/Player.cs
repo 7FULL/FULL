@@ -229,8 +229,8 @@ public class Player : Entity
             //In case the user has no items we add the item Basic Sword
             if (userData.Items == null || userData.Items.Length == 0)
             {
-                Debug.Log("No items" + response);
-                //inventory.AddItem(Items.BASIC_SWORD);
+                //Debug.Log("No items" + response);
+                inventory.AddItem(Items.GLOCK);
             }
             else
             {
@@ -240,6 +240,8 @@ public class Player : Entity
                     inventory.AddItem(item);
                 }
             }
+            
+            inventory.Initialize();
             
             ShowFormattedCoins();
         }
@@ -342,8 +344,8 @@ public class Player : Entity
 
     private void Over(string letra, string mensaje)
     {
-        overCanvas.Configure(letra, mensaje);
         overCanvas.gameObject.SetActive(true);
+        overCanvas.Configure(letra, mensaje);
     }
 
     #region Controller Input Handling

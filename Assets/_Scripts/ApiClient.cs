@@ -79,7 +79,7 @@ public class ApiClient
         }
         catch (Exception e)
         {
-            Debug.LogError(e);
+            Debug.LogError(endpoint + jsonData + e);
         }
 
         return responseContent;
