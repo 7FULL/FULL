@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -31,7 +33,13 @@ public class Inventory : MenuUtils
     [InspectorName("Principal inventory slots")]
     private ItemDisplay[] principalInventorySlots;
     
+    [SerializeField]
+    [InspectorName("Ammo Text")]
+    private TMP_Text ammoText;
+    
     private Item currentItem;
+    
+    public Item CurrentItem => currentItem;
     
     private int currentSlot = 0;
         
@@ -139,16 +147,119 @@ public class Inventory : MenuUtils
             }
         }
         
-        //Un select all slots and select the first one
-        foreach (ItemDisplay itemDisplay in principalInventorySlots)
-        {
-            itemDisplay.UnSelect();
-        }
+        ConfigureItems();
 
         if (items.Count > 0)
         {
             currentItem = items[0];
+            
             principalInventorySlots[0].Select();
+        }
+    }
+
+    private void Update()
+    {
+        //If  mouse scroll up, select the next item and if mouse scroll down, select the previous item from the principal inventory
+        if (Input.GetAxis("Mouse ScrollWheel") < 0f)
+        {
+            if (currentSlot < principalInventorySlots.Length - 1)
+            {
+                currentSlot++;
+            }
+            else
+            {
+                currentSlot = 0;
+            }
+            
+            ConfigureItems();
+        }
+        else if (Input.GetAxis("Mouse ScrollWheel") > 0f)
+        {
+            if (currentSlot > 0)
+            {
+                currentSlot--;
+            }
+            else
+            {
+                currentSlot = principalInventorySlots.Length - 1;
+            }
+            
+            ConfigureItems();
+        }
+    }
+
+    private void ConfigureItems()
+    {
+        if (currentSlot < items.Count && items[currentSlot] != null)
+        {
+            currentItem = items[currentSlot];
+        }
+        else
+        {
+            currentItem = null;
+        }
+            
+        foreach (ItemDisplay itemDisplay in principalInventorySlots)
+        {
+            itemDisplay.UnSelect();
+        }
+            
+        principalInventorySlots[currentSlot].Select();
+        
+        //We disable every item in the inventory
+        for (int i = 0; i < inventoryContainer.transform.childCount; i++)
+        {
+            inventoryContainer.transform.GetChild(i).gameObject.SetActive(false);
+        }
+        
+        //We enable the item we want to display
+        if (inventoryContainer.transform.childCount > currentSlot)
+        {
+            inventoryContainer.transform.GetChild(currentSlot).gameObject.SetActive(true);
+        }
+        
+        UpdateItemText();
+    }
+    
+    public void UpdateItemText()
+    {
+        //We update the ammo text
+        if (currentItem != null)
+        {
+            if (currentItem is Gun gun)
+            {
+                string left = "";
+                
+                if (gun.LeftAmmo > 99)
+                {
+                    left = "99+";
+                }
+                else
+                {
+                    left = gun.LeftAmmo.ToString();
+                }
+                
+                ammoText.text = gun.CurrentAmmo + " / " + left;
+            }
+            else
+            {
+                string left = "";
+                
+                if (currentItem.Quantity > 99)
+                {
+                    left = "99+";
+                }
+                else
+                {
+                    left = currentItem.Quantity.ToString();
+                }
+                
+                ammoText.text = "1 / " + left;
+            }
+        }
+        else
+        {
+            ammoText.text = "1 / 1";
         }
     }
 }

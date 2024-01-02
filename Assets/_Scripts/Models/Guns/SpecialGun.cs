@@ -12,14 +12,4 @@ public class SpecialGun: Gun
     {
         throw new System.NotImplementedException();
     }
-
-    public override void Aim()
-    {
-        throw new System.NotImplementedException();
-    }
-
-    public override void UnAim()
-    {
-        throw new System.NotImplementedException();
-    }
 }

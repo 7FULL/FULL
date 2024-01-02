@@ -22,6 +22,11 @@ public class Gun: Item
     
     private float shootTimer;
 
+    private void OnEnable()
+    {
+        Initialize();
+    }
+
     private void Initialize()
     {
         GunData = (GunData) ItemData;
@@ -45,8 +50,6 @@ public class Gun: Item
             //TODO: Play empty sound
         }
     }
-    public virtual void Aim(){}
-    public virtual void UnAim(){}
     
     public override void Use()
     {
@@ -64,21 +67,20 @@ public class Gun: Item
         {
             if (GunData.fireRate <= shootTimer)
             {
-                Debug.Log("Shoot");
-                    
                 shootTimer = 0;
                 
                 currentAmmo--;
 
                 if (Physics.Raycast(GameManager.Instance.Player.CharacterCamera.transform.position, GameManager.Instance.Player.CharacterCamera.transform.forward, out RaycastHit hit))
                 {
-                    Debug.Log(hit.collider.gameObject.name);
-                    
                     if (hit.collider.gameObject.CompareTag("Player"))
                     {
-                        Debug.Log("Hit player");
-                        
-                        hit.collider.gameObject.GetComponentInParent<Entity>().TakeDamageRPC(GunData.damage);
+                        bool dead = hit.collider.gameObject.GetComponentInParent<Entity>().TakeDamageRPC(GunData.damage);
+
+                        if (dead)
+                        {
+                            GameManager.Instance.Player.AddCoins(1000);
+                        }
                     }
                 }
                 

@@ -91,7 +91,7 @@ public class Player : Entity
     [InspectorName("Coins text")]
     private TMP_Text coinsText;
     
-    private bool canMove = true;
+    private bool canMove = false;
 
     private ApiClient api;
 
@@ -105,6 +105,9 @@ public class Player : Entity
     
     private GameObject contactRequest;
     
+    [SerializeField]
+    [InspectorName("Contact Time Out")]
+    [Tooltip("The time for the player to wait for a contact response (in seconds) Once the time is over the request will be canceled")]
     private int contactTimeOut = 20;
 
     private void Start()
@@ -196,6 +199,7 @@ public class Player : Entity
         string uniqueIdentifier = SystemInfo.deviceUniqueIdentifier;
         
         // If a development build
+        /*
         if (Debug.isDebugBuild)
         {
             uniqueIdentifier = "2";
@@ -203,7 +207,7 @@ public class Player : Entity
         if (Application.isEditor)
         {
             uniqueIdentifier = "1";
-        }
+        }*/
         
         /*
         Contact contact = new Contact("Rodrigo", "2");
@@ -272,6 +276,9 @@ public class Player : Entity
         
         // We save the data every 5 min
         InvokeRepeating("SaveObjectsData", 300, 300);
+        
+        // We save the coins every 5 min
+        InvokeRepeating("SaveCoins", 300, 300);
     }
 
     private void Update()
@@ -293,6 +300,8 @@ public class Player : Entity
         HandleInventory();
         
         Chat();
+        
+        HandleItemUse();
 
         //DevCall();
 
@@ -332,6 +341,18 @@ public class Player : Entity
         }
     }
 
+    private void HandleItemUse()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (inventory.CurrentItem != null)
+            {
+                inventory.CurrentItem.Use();
+                inventory.UpdateItemText();
+            }
+        }
+    }
+    
     public void Stop()
     {
         canMove = false;
@@ -482,6 +503,7 @@ public class Player : Entity
     public void EnableMainCanvas()
     {
         mainCanvas.SetActive(true);
+        inventory.UpdateItemText();
     }
 
     private void HandleInventory()
@@ -696,9 +718,22 @@ public class Player : Entity
         }
     }
     
+    //Every 5 min we save the coins of the player
+    private void SaveCoins()
+    {
+        string json = "{";
+        json +=  "\"data\":" + userData.Coins + ",";
+        json +=  "\"user\": \"" + id + "\"";
+        json += "}";
+        
+        api.Post("coins/update", json);
+    }
+    
     private void OnApplicationQuit()
     {
         SaveObjectsData();
+        
+        SaveCoins();
     }
     
     public void AddItem(Items item)
@@ -743,5 +778,12 @@ public class Player : Entity
         aux = aux.Replace(',', '.');
         
         coinsText.text = aux;
+    }
+    
+    public void RemoveCoins(int coins)
+    {
+        userData.RemoveCoins(coins);
+        
+        ShowFormattedCoins();
     }
 }

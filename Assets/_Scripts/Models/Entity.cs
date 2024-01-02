@@ -46,9 +46,11 @@ public abstract class Entity: MonoBehaviour
         }
     }
     
-    public void TakeDamageRPC(int damage)
+    public bool TakeDamageRPC(int damage)
     {
         pv.RPC("TakeDamage", RpcTarget.All, damage);
+        
+        return _health <= 0;
     }
     
     public void Heal(int amount)
