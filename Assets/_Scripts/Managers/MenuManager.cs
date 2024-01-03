@@ -32,7 +32,13 @@ public class MenuManager: MonoBehaviour
     /// <param name="keepFocus">If true, the mouse will not be focused on the menu</param>
     public void OpenMenu(Menu menu, bool keepFocus = false)
     {
-        Debug.Log("Lo que sea: " + menu);
+        if (currentMenu.MenuGameObject != null)
+        {
+            MenuUtils iMenu = currentMenu.MenuGameObject.GetComponent<MenuUtils>();
+            
+            iMenu.CloseAnimation();
+        }
+        
         foreach (MenuStruct menuStruct in menus)
         {
             if (menuStruct.MenuType == menu)
@@ -45,15 +51,6 @@ public class MenuManager: MonoBehaviour
                 
                 currentMenu = menuStruct;
             }
-            else
-            {
-                if (menuStruct.MenuType != Menu.NONE)
-                {
-                    MenuUtils iMenu = menuStruct.MenuGameObject.GetComponent<MenuUtils>();
-                    
-                    iMenu.CloseAnimation();
-                }
-            }
         }
         
         // Free the mouse
@@ -64,6 +61,9 @@ public class MenuManager: MonoBehaviour
             
             GameManager.Instance.Player.Stop();
         }
+        
+        Debug.Log("Menu opened: " + menu);
+        Debug.Log("Current menu: " + currentMenu.MenuType);
     }
 
     private void Update()

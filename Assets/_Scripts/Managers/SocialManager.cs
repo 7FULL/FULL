@@ -66,19 +66,18 @@ public class SocialManager : MonoBehaviour
     {
         // Init RTC Engine
         rtcEngine = Agora.Rtc.RtcEngine.CreateAgoraRtcEngineEx();
-        UserEventHandler handler = new UserEventHandler(this);
+        //UserEventHandler handler = new UserEventHandler(this);
             
         RtcEngineContext context = new RtcEngineContext(AGORA_APP_ID, 0,
             CHANNEL_PROFILE_TYPE.CHANNEL_PROFILE_LIVE_BROADCASTING,
             AUDIO_SCENARIO_TYPE.AUDIO_SCENARIO_GAME_STREAMING);
         rtcEngine.Initialize(context);
-        rtcEngine.InitEventHandler(handler);
+        //rtcEngine.InitEventHandler(handler);
         
         // Set basic configuration
         rtcEngine.EnableAudio();
         rtcEngine.SetChannelProfile(CHANNEL_PROFILE_TYPE.CHANNEL_PROFILE_COMMUNICATION);
         rtcEngine.SetClientRole(CLIENT_ROLE_TYPE.CLIENT_ROLE_BROADCASTER);
-        
     }
     
     public void Call(Contact playerToCall, bool videoCall = false)
@@ -127,6 +126,7 @@ public class SocialManager : MonoBehaviour
         }
         else
         {
+            Debug.Log("Waiting for player to answer the call");
             yield return new WaitForSecondsRealtime(callReponseTimeout);
         }
 
@@ -286,6 +286,7 @@ public class SocialManager : MonoBehaviour
 
     public void LeaveCall()
     {
+        Debug.Log("Leave call");
         GameManager.Instance.Player.PV.RPC("LeaveCallRPC", contact.PV.Controller);
         EndCall();
     }
@@ -298,6 +299,8 @@ public class SocialManager : MonoBehaviour
             return;
         }
         
+        Debug.Log("End call");
+        
         MenuManager.Instance.CloseMenu();
 
         rtcEngine.LeaveChannel();
@@ -309,13 +312,14 @@ public class SocialManager : MonoBehaviour
     
     public void ClearContactRequest()
     {
+        Debug.LogError("ClearContactRequest");
         if (isReceivingContactRequest)
         {
             isReceivingContactRequest = false;
         
             requestContact = null;
         
-            Debug.LogError("ClearContactRequest");
+            Debug.LogError("ClearContactRequestError");
         }
     }
     
@@ -391,6 +395,7 @@ public class SocialManager : MonoBehaviour
     }
 }
 
+/*
 internal class UserEventHandler : IRtcEngineEventHandler
     {
         private readonly SocialManager _audioSample;
@@ -435,4 +440,4 @@ internal class UserEventHandler : IRtcEngineEventHandler
             Debug.Log("OnUserOffline");
         }
     }
-
+*/

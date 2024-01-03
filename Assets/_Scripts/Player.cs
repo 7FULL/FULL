@@ -199,7 +199,6 @@ public class Player : Entity
         string uniqueIdentifier = SystemInfo.deviceUniqueIdentifier;
         
         // If a development build
-        /*
         if (Debug.isDebugBuild)
         {
             uniqueIdentifier = "2";
@@ -207,7 +206,7 @@ public class Player : Entity
         if (Application.isEditor)
         {
             uniqueIdentifier = "1";
-        }*/
+        }
         
         /*
         Contact contact = new Contact("Rodrigo", "2");

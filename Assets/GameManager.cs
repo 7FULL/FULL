@@ -157,6 +157,8 @@ public class GameManager : MonoBehaviourPunCallbacks
 	        this.player.AddContact(contact);
 	        
 	        SocialManager.Instance.ClearContactRequest();
+	        
+	        contactInput.text = "";
         }
 
         public override void OnJoinedRoom()
