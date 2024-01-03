@@ -26,16 +26,20 @@ public class Inventory : MenuUtils
     private GameObject inventoryContainer;
     
     [SerializeField]
-    [InspectorName("Inventory slots")]
-    private ItemDisplay[] inventorySlots;
-    
-    [SerializeField]
     [InspectorName("Principal inventory slots")]
     private ItemDisplay[] principalInventorySlots;
     
     [SerializeField]
     [InspectorName("Ammo Text")]
     private TMP_Text ammoText;
+    
+    [SerializeField]
+    [InspectorName("Items container")]
+    private GameObject itemsContainer;
+    
+    [SerializeField]
+    [InspectorName("Item prefab")]
+    private GameObject itemPrefab;
     
     private Item currentItem;
     
@@ -57,7 +61,8 @@ public class Inventory : MenuUtils
     {
         base.OpenAnimation();
         
-        loadContacts();
+        LoadContacts();
+        LoadItem();
         
         isOpen = true;
     }
@@ -69,7 +74,7 @@ public class Inventory : MenuUtils
         isOpen = false;
     }
 
-    private void loadContacts()
+    private void LoadContacts()
     {
         GameManager.Instance.Player.RefreshContacts();
         
@@ -83,6 +88,24 @@ public class Inventory : MenuUtils
             GameObject contactObject = Instantiate(contactPrefab, conocidosContainer.transform);
             ContactDisplay contactObjectScript = contactObject.GetComponent<ContactDisplay>();
             contactObjectScript.Configure(contact);
+        }
+    }
+
+    private void LoadItem()
+    {
+        foreach (Transform child in itemsContainer.transform)
+        {
+            Destroy(child.gameObject);
+        }
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            if (items[i] != null)
+            {
+                GameObject itemObject = Instantiate(itemPrefab, itemsContainer.transform);
+                ItemInventoryDisplay itemObjectScript = itemObject.GetComponent<ItemInventoryDisplay>();
+                itemObjectScript.Configure(items[i], this, i); 
+            }
         }
     }
     
@@ -111,7 +134,50 @@ public class Inventory : MenuUtils
         }
         
         Item itemToAddToInventory = Instantiate(ItemManager.Instance.GetItem(itemToAdd).prefab, inventoryContainer.transform).GetComponent<Item>();
-        items.Add(itemToAddToInventory);
+        
+        bool aux = false;
+        
+        //If there is a null item in the inventory, we replace it with the new item
+        for (int i = 0; i < items.Count; i++)
+        {
+            if (items[i] == null && !aux)
+            {
+                items[i] = itemToAddToInventory;
+                aux = true;
+            }
+        }
+        
+        if (!aux)
+        {
+            items.Add(itemToAddToInventory);
+        }
+        
+        Initialize(false);
+    }
+
+    public void AddItem(Item item)
+    {
+        Item itemObject = Instantiate(item.ItemData.prefab, inventoryContainer.transform).GetComponent<Item>();
+        itemObject.Initialize(item.ItemData, item.Quantity);
+        
+        bool aux = false;
+        
+        //If there is a null item in the inventory, we replace it with the new item
+        for (int i = 0; i < items.Count; i++)
+        {
+            if (items[i] == null && !aux)
+            {
+                items[i] = itemObject;
+                aux = true;
+            }
+        }
+        
+        if (!aux)
+        {
+            items.Add(itemObject);
+        }
+        
+        Initialize(false);
     }
     
     public void AddItem(SerializableItemData serializableItemData)
@@ -129,31 +195,52 @@ public class Inventory : MenuUtils
         ItemData itemData = ItemManager.Instance.GetItem(serializableItemData.name);
         Item itemToAdd = Instantiate(itemData.prefab, inventoryContainer.transform).GetComponent<Item>();
         itemToAdd.Initialize(itemData, serializableItemData.quantity);
-        items.Add(itemToAdd);
+        
+        bool aux = false;
+        
+        //If there is a null item in the inventory, we replace it with the new item
+        for (int i = 0; i < items.Count; i++)
+        {
+            if (items[i] == null && !aux)
+            {
+                items[i] = itemToAdd;
+                aux = true;
+            }
+        }
+        
+        if (!aux)
+        {
+            items.Add(itemToAdd);
+        }
+        
+        Initialize(false);
     }
 
-    public void Initialize()
+    public void Initialize(bool deselect = true)
     {
         //Set all images of the slots to the items image
-        for (int i = 0; i < inventorySlots.Length; i++)
+        for (int i = 0; i < principalInventorySlots.Length; i++)
         {
             if (i < items.Count)
             {
-                inventorySlots[i].Configure(items[i]);
+                principalInventorySlots[i].Configure(items[i]);
             }
             else
             {
-                inventorySlots[i].Configure(null);
+                principalInventorySlots[i].Configure(null);
             }
         }
         
         ConfigureItems();
 
-        if (items.Count > 0)
+        if (deselect)
         {
-            currentItem = items[0];
+            if (items.Count > 0)
+            {
+                currentItem = items[0];
             
-            principalInventorySlots[0].Select();
+                principalInventorySlots[0].Select();
+            }
         }
     }
 
@@ -185,6 +272,31 @@ public class Inventory : MenuUtils
             }
             
             ConfigureItems();
+        }
+        
+        //If we press a number, select the item in that slot
+        switch (Input.inputString)
+        {
+            case "1":
+                currentSlot = 0;
+                ConfigureItems();
+                break;
+            case "2":
+                currentSlot = 1;
+                ConfigureItems();
+                break;
+            case "3":
+                currentSlot = 2;
+                ConfigureItems();
+                break;
+            case "4":
+                currentSlot = 3;
+                ConfigureItems();
+                break;
+            case "5":
+                currentSlot = 4;
+                ConfigureItems();
+                break;
         }
     }
 
@@ -261,5 +373,61 @@ public class Inventory : MenuUtils
         {
             ammoText.text = "1 / 1";
         }
+    }
+    
+    //This function is called when the player changes the position of an object in the inventory to a position in the principal inventory
+    public void ChangePosition(Item item, int to)
+    {
+        int from = items.IndexOf(item);
+        if (to < 5)
+        {
+            Item itemToChange = null;
+        
+            if (to < items.Count)
+            {
+                itemToChange = items[to];
+            
+                items.RemoveAt(from);
+                items.Insert(from, itemToChange);
+                items.RemoveAt(to);
+                items.Insert(to, item);
+            }
+            else
+            {
+                while (items.Count <= to)
+                {
+                    items.Add(null);
+                }
+            
+                itemToChange = items[to];
+            
+                items.RemoveAt(from);
+                items.Insert(from, itemToChange);
+                items.RemoveAt(to);
+                items.Insert(to, item);
+            }
+        }
+        else
+        {
+            while (items.Count < 5)
+            {
+                items.Add(null);
+            }
+            
+            items.RemoveAt(from);
+            items.Insert(from, null);
+            items.Add(item);
+        }
+        
+        //Set all images of the slots to the items image
+        for (int i = 0; i < principalInventorySlots.Length; i++)
+        {
+            if (i < items.Count)
+            {
+                principalInventorySlots[i].Configure(items[i]);
+            }
+        }
+        
+        Initialize(false);
     }
 }

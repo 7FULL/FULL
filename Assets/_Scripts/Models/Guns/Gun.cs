@@ -21,10 +21,15 @@ public class Gun: Item
     private bool useMuzzleFlash;
     
     private float shootTimer;
+    
+    private bool alreadeyInitialized = false;
 
     private void OnEnable()
     {
-        Initialize();
+        if (!alreadeyInitialized)
+        {
+            Initialize();
+        }
     }
 
     private void Initialize()
@@ -35,6 +40,8 @@ public class Gun: Item
         currentAmmo = GunData.magazineSize;
         
         shootTimer = 0;
+        
+        alreadeyInitialized = true;
     }
 
     public virtual void Reload()

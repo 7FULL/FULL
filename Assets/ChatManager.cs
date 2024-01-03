@@ -55,7 +55,7 @@ public class ChatManager : MonoBehaviour
         }
         
         //Desfocus input
-        input.DeactivateInputField(true);
+        OnUnfocus();
     }
     
     public void CheckEnter()
@@ -83,6 +83,7 @@ public class ChatManager : MonoBehaviour
     
     public void FocusChat()
     {
+        input.enabled = true;
         input.ActivateInputField();
     }
 
@@ -93,6 +94,7 @@ public class ChatManager : MonoBehaviour
     
     public void OnUnfocus()
     {
+        input.enabled = false;
         GameManager.Instance.Player.Resume();
         input.DeactivateInputField();
     }

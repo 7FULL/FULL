@@ -35,8 +35,10 @@ public class ApiClient
         }
         catch (Exception e)
         {
-            // Manejar excepciones
             Debug.LogError(e);
+            
+            //We close the connection
+            httpClient.Dispose();
         }
 
         return responseContent;
@@ -80,6 +82,9 @@ public class ApiClient
         catch (Exception e)
         {
             Debug.LogError(endpoint + jsonData + e);
+            
+            //We close the connection
+            httpClient.Dispose();
         }
 
         return responseContent;

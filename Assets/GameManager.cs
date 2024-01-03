@@ -29,8 +29,8 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         [SerializeField] private GameObject chat;
 
-        //private ApiClient apiClient = new ApiClient("http://localhost:3000/api/");
-        private ApiClient apiClient = new ApiClient("https://full-apirest.onrender.com/api/");
+        private ApiClient apiClient = new ApiClient("http://localhost:3000/api/");
+        //private ApiClient apiClient = new ApiClient("https://full-apirest.onrender.com/api/");
         
         public ApiClient ApiClient => apiClient;
 

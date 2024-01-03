@@ -2,7 +2,7 @@
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "DistanceGun", menuName = "Items/Guns/DistanceGun", order = 1)]
-public abstract class DistanceGun: Gun
+public class DistanceGun: Gun
 {
     private DistanceGunData gunInfo;
     
@@ -12,10 +12,4 @@ public abstract class DistanceGun: Gun
     {
         gunInfo = (DistanceGunData) ItemData;
     }
-
-    [SerializeField]
-    [InspectorName("Range")]
-    private int _range;
-    
-    public int Range => _range;
 }

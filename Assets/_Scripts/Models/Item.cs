@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.Serialization;
 
 //TODO: Make this abstract in case it is needed as well as some other classes that inherit from this one
@@ -11,6 +12,10 @@ public abstract class Item: MonoBehaviour
     [SerializeField]
     [InspectorName("Quantity")]
     private int _quantity = 1;
+    
+    [SerializeField]
+    [InspectorName("Floor collider")]
+    private Collider _floorCollider;
     
     public ItemData ItemData => _itemData;
     
@@ -31,7 +36,16 @@ public abstract class Item: MonoBehaviour
     {
         _quantity += quantity;
     }
-    
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            other.GetComponentInParent<Player>().AddItem(this);
+            Destroy(gameObject);
+        }
+    }
+
     //Use
     public abstract void Use();
 }

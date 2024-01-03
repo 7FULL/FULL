@@ -274,7 +274,7 @@ public class Player : Entity
         RefreshContacts();
         
         // We save the data every 5 min
-        InvokeRepeating("SaveObjectsData", 300, 300);
+        InvokeRepeating("SaveObjectsData", 1, 300);
         
         // We save the coins every 5 min
         InvokeRepeating("SaveCoins", 300, 300);
@@ -342,7 +342,7 @@ public class Player : Entity
 
     private void HandleItemUse()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButton(0))
         {
             if (inventory.CurrentItem != null)
             {
@@ -736,6 +736,16 @@ public class Player : Entity
     }
     
     public void AddItem(Items item)
+    {
+        inventory.AddItem(item);
+    }
+    
+    public void AddItem(SerializableItemData item)
+    {
+        inventory.AddItem(item);
+    }
+    
+    public void AddItem(Item item)
     {
         inventory.AddItem(item);
     }
