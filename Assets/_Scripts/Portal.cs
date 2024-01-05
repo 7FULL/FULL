@@ -17,7 +17,14 @@ public class Portal : MonoBehaviour
         {
             if (collision.gameObject.GetComponentInParent<PhotonView>().IsMine)
             {
-                GameManager.Instance.JoinRoom(_room);
+                if (_room != Rooms.LOBBY)
+                {
+                    GameManager.Instance.JoinRoom(_room);
+                }
+                else
+                {
+                    GameManager.Instance.Player.GoToLobby();
+                }
             }
         }
     }

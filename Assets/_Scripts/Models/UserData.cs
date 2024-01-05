@@ -158,12 +158,6 @@ public class UserDataResponse
             newContacts[i] = contacts[i].ToContact();
         }
         
-        //Dev only
-        foreach (SerializableItemData item in items)
-        {
-            Debug.Log(item);
-        }
-        
         UserData userData = new UserData(newContacts, coins, id, api, items);
         
         return userData;

@@ -8,6 +8,7 @@ using Photon.Pun;
 using Photon.Pun.Demo.PunBasics;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Random = UnityEngine.Random;
 
 public class Player : Entity
@@ -109,7 +110,7 @@ public class Player : Entity
     [InspectorName("Contact Time Out")]
     [Tooltip("The time for the player to wait for a contact response (in seconds) Once the time is over the request will be canceled")]
     private int contactTimeOut = 20;
-
+    
     private void Start()
     {
         // The request time is updated because the fixed update executes 50 times per second
@@ -282,11 +283,25 @@ public class Player : Entity
 
     private void Update()
     {
-        if (!PV.IsMine || !canMove) return;
+        if (!PV.IsMine) return;
 
         //DevAddObject();
-        
-        HandleCharacterInput();
+
+        if (canMove) 
+        {
+            if (GameManager.Instance.CurrentRoom != Rooms.SHOOTER)
+            {
+                HandleCharacterInput();
+            }else
+            {
+                ShooterRoomConfiguration shooterRoomConfiguration = (ShooterRoomConfiguration)RoomConfiguration.Instance;
+
+                if (shooterRoomConfiguration.IsPlaying)
+                {
+                    HandleCharacterInput();
+                }
+            }
+        }
         
         HandleCallCanvas();
         
@@ -299,8 +314,11 @@ public class Player : Entity
         HandleInventory();
         
         Chat();
-        
-        HandleItemUse();
+
+        if (RoomConfiguration.Instance.CanPlayerUseItems)
+        {
+            HandleItemUse();
+        }
 
         //DevCall();
 
@@ -352,7 +370,7 @@ public class Player : Entity
         }
     }
     
-    public void Stop()
+    public void Stop() 
     {
         canMove = false;
     }
@@ -480,6 +498,15 @@ public class Player : Entity
                     }
                 }
             }
+            else if (hit.collider.gameObject.CompareTag("Chess"))
+            {
+                Over("Q", "Press to open chess");
+                
+                if (Input.GetKeyDown(KeyCode.Q))
+                {
+                    hit.collider.gameObject.GetComponent<Chess>().Open();
+                }
+            }
             else
             {
                 overCanvas.gameObject.SetActive(false);
@@ -598,7 +625,7 @@ public class Player : Entity
 
     private void Chat()
     {
-        if (Input.GetKey(KeyCode.T))
+        if (Input.GetKeyDown(KeyCode.T))
         {
             ChatManager.Instance.FocusChat();
         }
@@ -673,11 +700,43 @@ public class Player : Entity
         videoCallCamera.enabled = false;
     }
     
-    public override void Die()
+    public override void Die(bool restore = true)
     {
-        RestorePlayer();
+        //TODO
+        if (restore)
+        {
+            //RestorePlayer();
+        }
         
-        GameManager.Instance.JoinRoom(Rooms.LOBBY);
+        Destroy(GameManager.Instance.gameObject);
+        Destroy(ChatManager.Instance.gameObject);
+        
+        Invoke(nameof(Lobby), 1f);
+    }
+
+    private void Lobby()
+    {
+        SceneManager.LoadScene(Rooms.LOBBY.ToString());
+    }
+
+    public void WinHungerGames()
+    {
+        //We add 1000 coins then we show a popup satisfying the user and then we wait 5 seconds to go to the lobby
+        AddCoins(1000);
+        
+        Debug.LogError("Congratulations you won the Hunger Games!!!");
+        
+        MenuManager.Instance.PopUp("Congratulations you won the Hunger Games!!!");
+        
+        Invoke(nameof(GoToLobby), 5.0f);
+        
+        Destroy(GameManager.Instance.gameObject);
+        Destroy(ChatManager.Instance.gameObject);
+    }
+    
+    public void GoToLobby()
+    {
+        Die(false);
     }
 
     private void RestorePlayer()

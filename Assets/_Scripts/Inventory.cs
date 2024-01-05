@@ -41,6 +41,10 @@ public class Inventory : MenuUtils
     [InspectorName("Item prefab")]
     private GameObject itemPrefab;
     
+    [SerializeField]
+    [InspectorName("Empty item prefab")]
+    private GameObject emptyItemPrefab;
+    
     private Item currentItem;
     
     public Item CurrentItem => currentItem;
@@ -157,6 +161,16 @@ public class Inventory : MenuUtils
 
     public void AddItem(Item item)
     {
+        //If theres already an item with the same name, add it to the stack
+        foreach (Item item2 in items)
+        {
+            if (item2.ItemData.name == item.ItemData.name)
+            {
+                item2.Add(1);
+                return;
+            }
+        }
+        
         Item itemObject = Instantiate(item.ItemData.prefab, inventoryContainer.transform).GetComponent<Item>();
         itemObject.Initialize(item.ItemData, item.Quantity);
         
@@ -419,15 +433,30 @@ public class Inventory : MenuUtils
             items.Add(item);
         }
         
-        //Set all images of the slots to the items image
-        for (int i = 0; i < principalInventorySlots.Length; i++)
+        LoadItem();
+        Initialize(false);
+        
+        UpdateItemsGameobject();
+    }
+    
+    private void UpdateItemsGameobject()
+    {
+        //We update the position of the items in the inventory
+        for (int i = 0; i < items.Count; i++)
         {
-            if (i < items.Count)
+            if (items[i] != null)
             {
-                principalInventorySlots[i].Configure(items[i]);
+                items[i].transform.SetParent(inventoryContainer.transform);
+                items[i].transform.SetSiblingIndex(i);
+            }
+            else
+            {
+                //If there is a null item, we replace it with an empty item
+                GameObject emptyItem = Instantiate(emptyItemPrefab, inventoryContainer.transform);
+                emptyItem.transform.SetSiblingIndex(i);
             }
         }
         
-        Initialize(false);
+        ConfigureItems();
     }
 }

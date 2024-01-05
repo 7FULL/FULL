@@ -25,6 +25,13 @@ public class GameManager : MonoBehaviourPunCallbacks
         // The name of the room where the player will be connected
         private Rooms mainRoom = Rooms.LOBBY;
         
+        //Current room
+        private Rooms currentRoom;
+        
+        public Rooms CurrentRoom => currentRoom;
+        
+        public bool IsInMainRoom => currentRoom == mainRoom;
+        
         private Player player;
 
         [SerializeField] private GameObject chat;
@@ -46,14 +53,7 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
 	        PhotonNetwork.ConnectUsingSettings();
 	        
-	        if (Instance == null)
-	        {
-		        Instance = this;
-	        }
-	        else
-	        {
-		        Destroy(this.gameObject);
-	        }
+	        Instance = this;
 	        
 	        PhotonNetwork.AutomaticallySyncScene = true;
 	        
@@ -100,6 +100,8 @@ public class GameManager : MonoBehaviourPunCallbacks
 	        }
 
 	        StartCoroutine(WaitForLoadScene(room));
+	        
+	        currentRoom = (Rooms) Enum.Parse(typeof(Rooms), room);
         }
 
         IEnumerator WaitForJoin(string room)
@@ -165,12 +167,32 @@ public class GameManager : MonoBehaviourPunCallbacks
         {
 	        if (player == null)
 	        {
+		        if (SceneManager.GetActiveScene().name != mainRoom.ToString())
+		        {
+			        spawnPoint.position = RoomConfiguration.Instance.GetSpawnPoint();
+		        }
+			        
 		        // we're in a room. spawn a character for the local player. it gets synced by using PhotonNetwork.Instantiate
 		        GameObject player = PhotonNetwork.Instantiate(this.playerPrefab.name, spawnPoint.position, spawnPoint.rotation, 0);
 		        
 		        this.player = player.GetComponent<Player>();
 
-		        StartCoroutine(WaitForVideo());
+		        if (SceneManager.GetActiveScene().name != mainRoom.ToString())
+		        {
+			        EnableChat();
+			        this.player.EnableMainCanvas();
+			        this.player.Resume();
+		        }
+		        else
+		        {
+			        StartCoroutine(WaitForVideo());
+		        }
+		        
+		        //If the scene is not the main room, we let the room handle the player
+		        if (SceneManager.GetActiveScene().name != mainRoom.ToString())
+		        {
+			        RoomConfiguration.Instance.HandlePlayer(this.player);
+		        }
 	        }
 	        else
 	        {

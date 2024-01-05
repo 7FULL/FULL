@@ -1,6 +1,7 @@
 ﻿using System;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Random = UnityEngine.Random;
 
 //TODO: Make this abstract in case it is needed as well as some other classes that inherit from this one
 public abstract class Item: MonoBehaviour
@@ -17,10 +18,51 @@ public abstract class Item: MonoBehaviour
     [InspectorName("Floor collider")]
     private Collider _floorCollider;
     
+    [SerializeField]
+    [InspectorName("Is floor item")]
+    private bool _isFloorColliderActive = false;
+    
     public ItemData ItemData => _itemData;
     
     public int Quantity => _quantity;
+
+    private void Awake()
+    {
+        if (_floorCollider != null)
+        {
+            _floorCollider.enabled = _isFloorColliderActive;
+        }
+    }
     
+    public void ConfigureFloorCollider(bool active)
+    {
+        _isFloorColliderActive = active;
+        _floorCollider.enabled = active;
+        
+        //TODO: Rotation animation
+    }
+
+    public void Drop()
+    {
+        ConfigureFloorCollider(true);
+        
+        //We add a rigidbody to the item
+        Rigidbody rigidbody = gameObject.AddComponent<Rigidbody>();
+        
+        //We block the rotation of the item
+        rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
+        
+        float fuerzaX = Random.Range(-5f, 5f);
+        float fuerzaZ = Random.Range(-5f, 5f);
+        
+        float fuerzaY = Mathf.Abs(Random.Range(1f, 5f));
+        
+        Vector3 fuerza = new Vector3(fuerzaX, fuerzaY, fuerzaZ);
+        
+        rigidbody.AddForce(fuerza, ForceMode.Impulse);
+         
+    }
+
     public void Initialize(ItemData itemData, int quantity = 1)
     {
         _itemData = itemData;
@@ -39,7 +81,7 @@ public abstract class Item: MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (_isFloorColliderActive && other.CompareTag("Player"))
         {
             other.GetComponentInParent<Player>().AddItem(this);
             Destroy(gameObject);

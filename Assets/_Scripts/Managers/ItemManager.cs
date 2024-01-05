@@ -30,16 +30,6 @@ public class ItemManager: MonoBehaviour
             Items.Add((ItemData) item);
         }
     }
-
-    public void DropItem(Item item, Vector3 position)
-    {
-        throw new System.NotImplementedException();
-    }
-
-    public void DestroyItem(Item item)
-    {
-        throw new System.NotImplementedException();
-    }
     
     public ItemData GetItem(Items item)
     {
@@ -52,5 +42,11 @@ public class ItemManager: MonoBehaviour
         }
         
         return null;
+    }
+    
+    //Get a random item from the list
+    public ItemData GetRandomItem()
+    {
+        return Items[Random.Range(0, Items.Count)];
     }
 }

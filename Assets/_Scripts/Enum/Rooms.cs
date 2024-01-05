@@ -2,4 +2,5 @@
 {
     LOBBY,
     MARKET_PLANET,
+    SHOOTER
 }

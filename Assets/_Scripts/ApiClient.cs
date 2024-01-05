@@ -18,28 +18,18 @@ public class ApiClient
     public async Task<string> Get(string endpoint)
     {
         string responseContent = null;
-
-        try
-        {
-            HttpResponseMessage response = await httpClient.GetAsync(new Uri(baseUrl + endpoint));
-
-            if (response.IsSuccessStatusCode)
-            {
-                responseContent = await response.Content.ReadAsStringAsync();
-            }
-            else
-            {
-                // Manejar errores aquí
-                Debug.LogError("Error");
-            }
+        
+        HttpResponseMessage response = await httpClient.GetAsync(new Uri(baseUrl + endpoint));
+        if (response.IsSuccessStatusCode)
+        { 
+            responseContent = await response.Content.ReadAsStringAsync();
         }
-        catch (Exception e)
+        else
         {
-            Debug.LogError(e);
-            
-            //We close the connection
-            httpClient.Dispose();
+            // Manejar errores aquí
+            Debug.LogError("Error");
         }
+
 
         return responseContent;
     }
@@ -58,34 +48,25 @@ public class ApiClient
         {
             jsonData += "\"";
         }
+        
+        string json = "{";
+        json +=  "\"data\":" + jsonData;
+        json += "}";
+            
+        //Debug.Log(json);
+            
+        StringContent content = new StringContent(json, Encoding.UTF8, "application/json");
+        HttpResponseMessage response = await httpClient.PostAsync(new Uri(baseUrl + endpoint), content);
 
-        try
+        if (response.IsSuccessStatusCode)
         {
-            string json = "{";
-            json +=  "\"data\":" + jsonData;
-            json += "}";
-            
-            //Debug.Log(json);
-            
-            StringContent content = new StringContent(json, Encoding.UTF8, "application/json");
-            HttpResponseMessage response = await httpClient.PostAsync(new Uri(baseUrl + endpoint), content);
-
-            if (response.IsSuccessStatusCode)
-            {
-                responseContent = await response.Content.ReadAsStringAsync();
-            }
-            else
-            {
-                Debug.LogError(response.StatusCode);
-            }
+            responseContent = await response.Content.ReadAsStringAsync();
         }
-        catch (Exception e)
+        else
         {
-            Debug.LogError(endpoint + jsonData + e);
-            
-            //We close the connection
-            httpClient.Dispose();
+            Debug.LogError(response.StatusCode);
         }
+        
 
         return responseContent;
     }

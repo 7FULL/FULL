@@ -83,7 +83,7 @@ public abstract class Entity: MonoBehaviour
         RestoreHealthAndArmor(_maxHealth, _maxArmor);
     }
     
-    public abstract void Die();
+    public abstract void Die(bool restore = true);
     
     //Initialize
     [PunRPC]

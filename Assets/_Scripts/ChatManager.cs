@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Photon.Pun;
@@ -27,8 +28,15 @@ public class ChatManager : MonoBehaviour
         {
             Instance = this;
         }
+        
+        DontDestroyOnLoad(this.gameObject);
     }
-    
+
+    private void Start()
+    {
+        OnUnfocus(false);
+    }
+
     [PunRPC]
     public void AddMessage(string message)
     {
@@ -85,6 +93,7 @@ public class ChatManager : MonoBehaviour
     {
         input.enabled = true;
         input.ActivateInputField();
+        input.Select();
     }
 
     public void OnFocus()
@@ -92,10 +101,13 @@ public class ChatManager : MonoBehaviour
         GameManager.Instance.Player.Stop();
     }
     
-    public void OnUnfocus()
+    public void OnUnfocus(bool resume = true)
     {
         input.enabled = false;
-        GameManager.Instance.Player.Resume();
+        if (resume)
+        {
+            GameManager.Instance.Player.Resume();
+        }
         input.DeactivateInputField();
     }
 }

@@ -10,7 +10,7 @@ public class TestBot : Entity
         InitializeRPC(100,100);
     }
     
-    public override void Die()
+    public override void Die(bool restore = true)
     {
         StartCoroutine(Respawn());
         //Restore health and armor and respawn in 2 seconds

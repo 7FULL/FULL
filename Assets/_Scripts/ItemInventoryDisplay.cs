@@ -42,7 +42,7 @@ public class ItemInventoryDisplay : MonoBehaviour
         //If position is greater than 4, it means that item is not in principal inventory so we select the last option
         if (position > 4)
         {
-            positionDropdown.value = 4;
+            positionDropdown.value = 5;
         }
         else
         {

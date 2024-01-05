@@ -191,6 +191,17 @@ public class MenuManager: MonoBehaviour
         
         GameManager.Instance.Player.Resume();
     }
+    
+    public void ClearNulls()
+    {
+        for (int i = 0; i < menus.Count; i++)
+        {
+            if (menus[i].MenuGameObject == null)
+            {
+                menus.RemoveAt(i);
+            }
+        }
+    }
 }
 
 [Serializable]
