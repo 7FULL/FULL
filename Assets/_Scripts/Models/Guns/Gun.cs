@@ -67,6 +67,11 @@ public class Gun: Item
         {
             return;
         }
+
+        if (currentAmmo == GunData.magazineSize)
+        {
+            return;
+        }
         
         if (leftAmmo > 0)
         {

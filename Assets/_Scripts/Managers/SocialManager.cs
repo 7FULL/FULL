@@ -312,14 +312,11 @@ public class SocialManager : MonoBehaviour
     
     public void ClearContactRequest()
     {
-        Debug.LogError("ClearContactRequest");
         if (isReceivingContactRequest)
         {
             isReceivingContactRequest = false;
         
             requestContact = null;
-        
-            Debug.LogError("ClearContactRequestError");
         }
     }
     

@@ -16,6 +16,7 @@ public class HungerGamesRoomConfiguration : RoomConfiguration
     ExitGames.Client.Photon.Hashtable CustomeValue;
     ExitGames.Client.Photon.Hashtable HasStarted;
     ExitGames.Client.Photon.Hashtable PlayersPlaying;
+    ExitGames.Client.Photon.Hashtable HasStartedCounting;
     
     [SerializeField]
     [InspectorName("Time remaining")]
@@ -27,6 +28,8 @@ public class HungerGamesRoomConfiguration : RoomConfiguration
     private int _peopleToPlay = 2;
     
     private bool _isPlaying = false;
+    
+    private bool _hasStartedCounting = false;
     
     public bool IsPlaying => _isPlaying;
     
@@ -51,11 +54,14 @@ public class HungerGamesRoomConfiguration : RoomConfiguration
         {
             CustomeValue = new ExitGames.Client.Photon.Hashtable();
             HasStarted = new ExitGames.Client.Photon.Hashtable();
+            HasStartedCounting = new ExitGames.Client.Photon.Hashtable();
             startTime = PhotonNetwork.Time;
             CustomeValue.Add("StartTime", startTime);
             HasStarted.Add("HasStarted", false);
+            HasStartedCounting.Add("HasStartedCounting", false);
             PhotonNetwork.CurrentRoom.SetCustomProperties(CustomeValue);
             PhotonNetwork.CurrentRoom.SetCustomProperties(HasStarted);
+            PhotonNetwork.CurrentRoom.SetCustomProperties(HasStartedCounting);
             
             //startTimer = true;
         }
@@ -63,6 +69,7 @@ public class HungerGamesRoomConfiguration : RoomConfiguration
         {
             startTime = double.Parse(PhotonNetwork.CurrentRoom.CustomProperties["StartTime"].ToString());
             _isPlaying = bool.Parse(PhotonNetwork.CurrentRoom.CustomProperties["HasStarted"].ToString());
+            _hasStartedCounting = bool.Parse(PhotonNetwork.CurrentRoom.CustomProperties["HasStartedCounting"].ToString());
         }
         
         
@@ -72,12 +79,17 @@ public class HungerGamesRoomConfiguration : RoomConfiguration
         }
         else
         {
-            if (PhotonNetwork.CurrentRoom.PlayerCount >= _peopleToPlay)
+            if (PhotonNetwork.CurrentRoom.PlayerCount >= _peopleToPlay && !_hasStartedCounting)
             {
                 startTime = PhotonNetwork.Time;
                 
                 startTimer = true;
             }
+        }
+
+        if (_hasStartedCounting)
+        {
+            startTimer = true;
         }
     }
     
@@ -168,7 +180,11 @@ public class HungerGamesRoomConfiguration : RoomConfiguration
                 CustomeValue = new Hashtable();
                 startTime = PhotonNetwork.Time;
                 CustomeValue.Add("StartTime", startTime);
-                    
+                
+                HasStartedCounting = new Hashtable();
+                HasStartedCounting.Add("HasStartedCounting", true);
+                
+                PhotonNetwork.CurrentRoom.SetCustomProperties(HasStartedCounting);
                 PhotonNetwork.CurrentRoom.SetCustomProperties(CustomeValue);
             }
         }
@@ -188,6 +204,11 @@ public class HungerGamesRoomConfiguration : RoomConfiguration
     public override void OnPlayerLeftRoom(Photon.Realtime.Player otherPlayer)
     {
         base.OnPlayerLeftRoom(otherPlayer);
+
+        if (isSpectating)
+        {
+            return;
+        }
         
         //We get the players that started playing
         Photon.Realtime.Player[] playersPlaying = (Photon.Realtime.Player[]) PhotonNetwork.CurrentRoom.CustomProperties["PlayersPlaying"];
@@ -212,11 +233,7 @@ public class HungerGamesRoomConfiguration : RoomConfiguration
         //If there is no players left, we end the game
         if (playersLeft <= 1)
         {
-            if (!isSpectating)
-            {
-                //TODO mandar un rpc a todos los jugadores usando el PV del gamemanager
-                EndGame();
-            }
+            EndGame();
         }
     }
 

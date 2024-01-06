@@ -170,12 +170,14 @@ public class Player : Entity
             Character.MeshRoot.transform.GetChild(0).transform.GetChild(0).gameObject.layer = 3;
 
             // We register the menus
+            MenuManager.Instance.SetCrossHair(inventory.Crosshair.gameObject);
+            
             MenuManager.Instance.RegisterMenu(receiveCallCanvas, Menu.RECEIVE_CALL, receiveCallCanvas.GetComponent<ReceiveCallMenu>());
             MenuManager.Instance.RegisterMenu(onGoingCanvas, Menu.CALL, onGoingCanvas.GetComponent<OnGoingCallMenu>());
             MenuManager.Instance.RegisterMenu(callingCanvas, Menu.CALLING, callingCanvas.GetComponent<OnGoingCallMenu>());
             MenuManager.Instance.RegisterMenu(videoCallCanvas, Menu.VIDEO_CALL, videoCallCanvas.GetComponent<OnGoingCallMenu>());
             MenuManager.Instance.RegisterMenu(inventory.gameObject, Menu.INVENTORY, inventory);
-
+            
             // We change the name of the player
             gameObject.name = playerName;
         }
@@ -211,14 +213,17 @@ public class Player : Entity
     {
         string uniqueIdentifier = SystemInfo.deviceUniqueIdentifier;
         
-        // If a development build
-        if (Debug.isDebugBuild)
-        {
-            uniqueIdentifier = "2";
-        }
         if (Application.isEditor)
         {
             uniqueIdentifier = "1";
+        }
+
+        if (!GameManager.Instance.ProdBuild)
+        {
+            if (Debug.isDebugBuild)
+            {
+                uniqueIdentifier = "2";
+            }
         }
         
         /*
@@ -316,7 +321,7 @@ public class Player : Entity
         
         HandleVoidTP();
 
-        //HandleMouseFocus();
+        HandleMouseFocus();
         
         HandleRaycast();
         
@@ -360,8 +365,15 @@ public class Player : Entity
                 }
                 else
                 {
-                    Debug.Log("Already receiving a contact request");
-                    SocialManager.Instance.AcceptContactRequest();
+                    //If we are receiving a contact request we check if the request is from the same player
+                    if (contactRequest.GetComponentInParent<Player>().ID == SocialManager.Instance.RequestContact.ID)
+                    {
+                        SocialManager.Instance.AcceptContactRequest();
+                    }
+                    else
+                    {
+                        MenuManager.Instance.PopUp("You are already receiving a contact request from a different player");
+                    }
                 }
             }
         }
@@ -386,7 +398,6 @@ public class Player : Entity
     
     public void Resume()
     {
-        Debug.Log("Resuming player");
         canMove = true;
     }
 
@@ -470,7 +481,7 @@ public class Player : Entity
     {
         yield return new WaitForSecondsRealtime(contactTimeOut);
         
-        if (isRequestingContact)
+        if (isRequestingContact && SocialManager.Instance.IsReceivingContactRequest && SocialManager.Instance.RequestContact == null)
         {
             isRequestingContact = false;
             requestTime = startedRequestTime;
@@ -478,6 +489,8 @@ public class Player : Entity
             contactRequest = null;
 
             SocialManager.Instance.ClearContactRequest();
+            
+            MenuManager.Instance.PopUp("Contact request time out");
         }
     }
 
@@ -489,9 +502,23 @@ public class Player : Entity
         {
             if (hit.collider.gameObject.CompareTag("Player") && hit.collider.gameObject != this.gameObject && hit.collider.gameObject != Character.gameObject)
             {
-                Over("F", "Hold to add person as a contact");
+                //We check if the player is already in our contacts
+                bool isInContacts = false;
+
+                foreach (Contact contact in userData.Contacts)
+                {
+                    if (contact.ID == hit.collider.gameObject.GetComponentInParent<Player>().ID)
+                    {
+                        isInContacts = true;
+                    }
+                }
+
+                if (!isInContacts)
+                {
+                    Over("F", "Hold to add person as a contact");
+                }
                 
-                if (Input.GetKey(KeyCode.F))
+                if (Input.GetKey(KeyCode.F) && !isInContacts)
                 {
                     isRequestingContact = true;
                     
@@ -561,17 +588,8 @@ public class Player : Entity
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            // Switch between cursor modes
-            if (Cursor.lockState == CursorLockMode.None)
-            {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-            }
-            else
-            {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
         }
     }
 
@@ -635,7 +653,7 @@ public class Player : Entity
 
     private void Chat()
     {
-        if (Input.GetKeyDown(KeyCode.T))
+        if (Input.GetKeyDown(KeyCode.T) && SocialManager.Instance.RequestContact == null && !SocialManager.Instance.IsReceivingContactRequest)
         {
             ChatManager.Instance.FocusChat();
         }
@@ -683,6 +701,12 @@ public class Player : Entity
         isRequestingContact = false;
         
         SocialManager.Instance.IsReceivingContactRequest = false;
+    }
+    
+    [PunRPC]
+    void GoToLobbyRPC()
+    {
+        Lobby();
     }
     #endregion
 
@@ -737,9 +761,9 @@ public class Player : Entity
         //We add 1000 coins then we show a popup satisfying the user and then we wait 5 seconds to go to the lobby
         AddCoins(10000);
         
-        Debug.LogError("Congratulations you won the Hunger Games!!!");
-        
         MenuManager.Instance.PopUp("Congratulations you won the Hunger Games!!!");
+        
+        PV.RPC("GoToLobbyRPC", RpcTarget.Others);
         
         SaveCoins();
         SaveObjectsData();

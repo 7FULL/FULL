@@ -10,7 +10,7 @@ public class IntroVideo : MonoBehaviour
         GameManager.Instance.Player.EnableMainCanvas();
         GameManager.Instance.EnableChat();
 
-        if (GameManager.Instance.IsInMainRoom)
+        if (SceneManager.GetActiveScene().name == Rooms.LOBBY.ToString())
         {
             GameManager.Instance.Player.Resume();
         }

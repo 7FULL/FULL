@@ -6,6 +6,7 @@ using SunTemple;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 using UnityEngine.Video;
 
 public class GameManager : MonoBehaviourPunCallbacks
@@ -50,6 +51,14 @@ public class GameManager : MonoBehaviourPunCallbacks
         [SerializeField]
         [InspectorName("Opacar Imagen")]
         private GameObject opacarImagen;
+        
+        [FormerlySerializedAs("prodMode")]
+        [SerializeField]
+        [InspectorName("Prod Mode")]
+        [Tooltip("Is this a production build?")]
+        private bool prodBuild = false;
+        
+        public bool ProdBuild => prodBuild;
 
         public override void OnEnable()
         {
@@ -74,6 +83,11 @@ public class GameManager : MonoBehaviourPunCallbacks
 	        //PhotonNetwork.AutomaticallySyncScene = true;
 	        
 	        //DontDestroyOnLoad(this.gameObject);
+
+	        if (prodBuild)
+	        {
+		        apiClient = new ApiClient("https://full-apirest.onrender.com/api/");
+	        }
         }
         
         public void EnableChat()

@@ -7,6 +7,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+[RequireComponent(typeof(PhotonView))]
 public class Inventory : MenuUtils
 {
     [InspectorName("Conocidos container")]
@@ -51,9 +52,13 @@ public class Inventory : MenuUtils
     [InspectorName("Crosshair")]
     private Image crosshair;
     
+    public Image Crosshair => crosshair;
+    
     [SerializeField]
     [InspectorName("Crosshair default")]
     private Sprite crosshairDefault;
+    
+    private PhotonView pv;
     
     private Item currentItem;
     
@@ -64,8 +69,10 @@ public class Inventory : MenuUtils
     private void Awake()
     {
         HasAnimation = true;
+        
+        pv = GetComponent<PhotonView>();
     }
-    
+
     public void CloseOnCLick()
     {
         MenuManager.Instance.CloseMenu();
@@ -149,7 +156,9 @@ public class Inventory : MenuUtils
         
         Item itemToAddToInventory = PhotonNetwork.Instantiate(Path.Combine("ItemsPrefabs", ItemManager.Instance.GetItem(itemToAdd).prefab.name), Vector3.zero, Quaternion.identity).GetComponent<Item>();
         GameObject o;
-        (o = itemToAddToInventory.gameObject).transform.SetParent(inventoryContainer.transform);
+        o = itemToAddToInventory.gameObject;
+        
+        pv.RPC("SetParent", RpcTarget.All, o.GetComponent<PhotonView>().ViewID);
         
         //Reset the position and rotation of the item
         o.transform.localPosition = Vector3.zero;
@@ -174,8 +183,17 @@ public class Inventory : MenuUtils
         
         Initialize(false);
     }
+    
+    [PunRPC]
+    public void SetParent(int o)
+    {
+        //We found the gameobject with the photonview id
+        GameObject gameObject = PhotonView.Find(o).gameObject;
+        
+        gameObject.transform.SetParent(inventoryContainer.transform);
+    }
 
-    public void AddItem(Item item)
+    public void  AddItem(Item item)
     {
         //If theres already an item with the same name, add it to the stack
         foreach (Item item2 in items)
@@ -190,7 +208,9 @@ public class Inventory : MenuUtils
         Item itemObject = PhotonNetwork.Instantiate(Path.Combine("ItemsPrefabs", item.ItemData.prefab.name), Vector3.zero, Quaternion.identity).GetComponent<Item>();
 
         GameObject o;
-        (o = itemObject.gameObject).transform.SetParent(inventoryContainer.transform);
+        o = itemObject.gameObject;
+        
+        pv.RPC("SetParent", RpcTarget.All, o.GetComponent<PhotonView>().ViewID);
         
         //Reset the position and rotation of the item
         o.transform.localPosition = Vector3.zero;
@@ -234,7 +254,9 @@ public class Inventory : MenuUtils
         Item itemToAdd = PhotonNetwork.Instantiate(Path.Combine("ItemsPrefabs", itemData.prefab.name), Vector3.zero, Quaternion.identity).GetComponent<Item>();
 
         GameObject o;
-        (o = itemToAdd.gameObject).transform.SetParent(inventoryContainer.transform);
+        o = itemToAdd.gameObject;
+        
+        pv.RPC("SetParent", RpcTarget.All, o.GetComponent<PhotonView>().ViewID);
         
         //Reset the position and rotation of the item
         o.transform.localPosition = Vector3.zero;

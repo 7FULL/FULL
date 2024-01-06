@@ -10,8 +10,9 @@ public class MenuManager: MonoBehaviour
     
     private MenuStruct currentMenu;
     
-    [SerializeField]
     private PopUp popup;
+    
+    private GameObject crossHair;
     
     // Singleton
     public static MenuManager Instance;
@@ -62,6 +63,16 @@ public class MenuManager: MonoBehaviour
             GameManager.Instance.Player.Stop();
         }
         
+        //Hide the crosshair if the menu is not a call menu
+        if (menu != Menu.CALL && menu != Menu.CALLING && menu != Menu.VIDEO_CALL && menu != Menu.RECEIVE_CALL)
+        {
+            crossHair.SetActive(false);
+        }
+        else
+        {
+            crossHair.SetActive(true);
+        }
+        
         Debug.Log("Menu opened: " + menu);
         Debug.Log("Current menu: " + currentMenu.MenuType);
     }
@@ -79,6 +90,8 @@ public class MenuManager: MonoBehaviour
     {
         if (currentMenu.MenuGameObject != null)
         {
+            crossHair.SetActive(true);
+            
             MenuUtils iMenu = currentMenu.MenuGameObject.GetComponent<MenuUtils>();
             
             if (iMenu == null || !iMenu.HasAnimation)
@@ -103,6 +116,11 @@ public class MenuManager: MonoBehaviour
     public void SetPopUp(PopUp popup)
     {
         this.popup = popup;
+    }
+    
+    public void SetCrossHair(GameObject crossHair)
+    {
+        this.crossHair = crossHair;
     }
     
     public void PopUp(string message)

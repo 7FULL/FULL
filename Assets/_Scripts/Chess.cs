@@ -23,4 +23,23 @@ public class Chess : MonoBehaviour
         
         _isOpen = true;
     }
+    
+    /*
+     public void Open()
+    {
+        if (_isOpen) return;
+        
+        pv.RPC("RPCOpen", RpcTarget.All);
+        
+        PhotonNetwork.Instantiate(Path.Combine("ItemsPrefabs", ItemManager.Instance.GetRandomItem().prefab.name), transform.position + new Vector3(), Quaternion.identity).GetComponent<Item>().Drop();
+    }
+    
+    [PunRPC]
+    public void RPCOpen()
+    {
+        _animator.Play();
+        
+        _isOpen = true;
+    }
+     */
 }
