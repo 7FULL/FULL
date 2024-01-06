@@ -2,5 +2,5 @@
 {
     LOBBY,
     MARKET_PLANET,
-    SHOOTER
+    HUNGER_GAMES
 }

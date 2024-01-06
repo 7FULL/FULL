@@ -1,7 +1,10 @@
 ﻿using System;
+using DG.Tweening;
+using Photon.Pun;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "Gun", menuName = "Items/Guns/Gun", order = 1)]
+
+[RequireComponent(typeof(PhotonView))]
 public class Gun: Item
 {
     private GunData GunData;
@@ -14,7 +17,11 @@ public class Gun: Item
     
     [SerializeField]
     [InspectorName("Muzzle Flash")]
-    private Transform _muzzleFlash;
+    private GameObject _muzzleFlash;
+    
+    [SerializeField]
+    [InspectorName("Gun Tip")]
+    private Transform gunTip;
     
     [SerializeField]
     [InspectorName("Use Muzzle Flash")]
@@ -23,12 +30,20 @@ public class Gun: Item
     private float shootTimer;
     
     private bool alreadeyInitialized = false;
+    
+    private Recoil _recoilsScript;
+    
+    private bool canShoot = true;
+    
+    private PhotonView pv;
 
     private void OnEnable()
     {
         if (!alreadeyInitialized)
         {
             Initialize();
+            
+            pv = GetComponent<PhotonView>();
         }
     }
 
@@ -42,15 +57,56 @@ public class Gun: Item
         shootTimer = 0;
         
         alreadeyInitialized = true;
+        
+        _recoilsScript = GameManager.Instance.Player.RecoilScript;
     }
 
     public virtual void Reload()
     {
-        //TODO: Do it using reload time
+        if (!canShoot)
+        {
+            return;
+        }
+        
         if (leftAmmo > 0)
         {
-            leftAmmo -= GunData.magazineSize;
-            currentAmmo = GunData.magazineSize;
+            canShoot = false;
+            
+            //We play the reload animation TODO
+            //GameManager.Instance.Player.Animator.SetTrigger("Reload");
+            
+            //We play the reload sound
+            AudioManager.Instance.PlaySound(GunData.reloadSound, transform.position);
+            
+            //This is a temporary animation using DOTween until we have the reload animation
+            //The animation is the gun rotating 
+            transform.DOLocalRotate(new Vector3(-360 * GunData.reloadFlips, 0, 0), GunData.reloadTime, RotateMode.FastBeyond360).SetEase(Ease.Linear);
+            
+            //We wait the reload time
+            DOVirtual.DelayedCall(GunData.reloadTime, () =>
+            {
+                //We calculate the ammo that we need to reload
+                int ammoToReload = GunData.magazineSize - currentAmmo;
+                
+                //We check if we have enough ammo to reload
+                if (ammoToReload <= leftAmmo)
+                {
+                    //We reload the ammo
+                    currentAmmo += ammoToReload;
+                    leftAmmo -= ammoToReload;
+                }
+                else
+                {
+                    //We reload the ammo
+                    currentAmmo += leftAmmo;
+                    leftAmmo = 0;
+                }
+                
+                canShoot = true;
+                
+                //We update the UI
+                GameManager.Instance.Player.UpdateAmmoUI();
+            });
         }
         else
         {
@@ -63,6 +119,14 @@ public class Gun: Item
         Shoot();
     }
 
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            Reload();
+        }
+    }
+
     public virtual void Shoot()
     {
         if (currentAmmo == -1 || leftAmmo == -1)
@@ -70,31 +134,50 @@ public class Gun: Item
             Initialize();
         }
         
-        if (currentAmmo > 0)
+        if (currentAmmo > 0 && canShoot)
         {
             if (GunData.fireRate <= shootTimer)
             {
                 shootTimer = 0;
                 
                 currentAmmo--;
+                
+                _recoilsScript.Configure(GunData.recoilData);
+                //We make recoil using gun data
+                _recoilsScript.RecoilFire();
 
-                if (Physics.Raycast(GameManager.Instance.Player.CharacterCamera.transform.position, GameManager.Instance.Player.CharacterCamera.transform.forward, out RaycastHit hit))
+                if (Physics.Raycast(GameManager.Instance.Player.CharacterCamera.Camera.transform.position, GameManager.Instance.Player.CharacterCamera.Camera.transform.forward, out RaycastHit hit))
                 {
                     if (hit.collider.gameObject.CompareTag("Player"))
                     {
                         bool dead = hit.collider.gameObject.GetComponentInParent<Entity>().TakeDamageRPC(GunData.damage);
-
+                        
+                        //Crosshair hit
+                        GameManager.Instance.Player.HitCrosshair();
+ 
                         if (dead)
                         {
                             GameManager.Instance.Player.AddCoins(1000);
+
+                            MenuManager.Instance.PopUp("You have killed a player!!!");
+                        }
+                    }
+                    else
+                    {
+                        if (GunData.bulletHole != null)
+                        {
+                            pv.RPC("CreateBulletHole", RpcTarget.All, hit.point, hit.normal);
                         }
                     }
                 }
                 
-                //TODO: Activate muzzle flash particles
+                if (useMuzzleFlash)
+                {
+                    pv.RPC("MuzzleFlash", RpcTarget.All);
+                }
             }
         }
-        else
+        else if (canShoot)
         {
             Reload();
         }
@@ -103,5 +186,30 @@ public class Gun: Item
     private void FixedUpdate()
     {
         shootTimer += Time.deltaTime;
+    }
+    
+    public Sprite GetCrosshair()
+    {
+        return GunData.crosshair;
+    }
+    
+    [PunRPC]
+    public void CreateBulletHole(Vector3 position, Vector3 normal)
+    {
+        GameObject bulletImpacstoneObj= Instantiate(GunData.bulletHole, position + normal * 0.001f, Quaternion.LookRotation(normal, Vector3.up));
+        Destroy(bulletImpacstoneObj, 10f);
+        //TODO: Maybe we could move to a parent to do not have a lot of bullet holes in the scene
+        //bulletImpacstoneObj.transform.SetParent(hit.collider.gameObject.transform);
+    }
+    
+    [PunRPC]
+    public void MuzzleFlash()
+    {
+        GameObject muzzle= Instantiate(_muzzleFlash, gunTip.position, gunTip.rotation);
+        muzzle.transform.SetParent(gunTip.transform);
+        Destroy(muzzle,1);
+                    
+        //Play shoot sound
+        AudioManager.Instance.PlaySound(GunData.shootSound, gunTip.position);
     }
 }

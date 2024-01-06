@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using DG.Tweening;
 using KinematicCharacterController;
 using KinematicCharacterController.Examples;
 using Photon.Pun;
@@ -9,6 +10,7 @@ using Photon.Pun.Demo.PunBasics;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 public class Player : Entity
@@ -92,6 +94,10 @@ public class Player : Entity
     [InspectorName("Coins text")]
     private TMP_Text coinsText;
     
+    [SerializeField]
+    [InspectorName("Hit crosshair")]
+    private Image hitCrosshair;
+    
     private bool canMove = false;
 
     private ApiClient api;
@@ -110,6 +116,12 @@ public class Player : Entity
     [InspectorName("Contact Time Out")]
     [Tooltip("The time for the player to wait for a contact response (in seconds) Once the time is over the request will be canceled")]
     private int contactTimeOut = 20;
+    
+    [SerializeField]
+    [InspectorName("Recoil script")]
+    private Recoil recoilScript;
+    
+    public Recoil RecoilScript => recoilScript;
     
     private void Start()
     {
@@ -130,12 +142,12 @@ public class Player : Entity
         videoCallCamera.enabled = false;
 
         if (!PV.IsMine){
-            CharacterCamera.gameObject.GetComponent<Camera>().enabled = false;
+            CharacterCamera.Camera.GetComponent<Camera>().enabled = false;
             
             minimapCamera.enabled = false;
 
             // Listener
-            CharacterCamera.gameObject.GetComponent<AudioListener>().enabled = false;
+            CharacterCamera.Camera.gameObject.GetComponent<AudioListener>().enabled = false;
             
             // Movement and pyhsics
             Character.enabled = false;
@@ -224,37 +236,29 @@ public class Player : Entity
 
         string response = "";
         
-        try
-        {
-            response = await api.Post("user", uniqueIdentifier);
+        response = await api.Post("user", uniqueIdentifier);
 
-            userData = JsonUtility.FromJson<UserDataResponse>(response).ToUserData(api,id);
-            
-            //In case the user has no items we add the item Basic Sword
-            if (userData.Items == null || userData.Items.Length == 0)
-            {
-                //Debug.Log("No items" + response);
-                inventory.AddItem(Items.GLOCK);
-            }
-            else
-            {
-                //We add the items to the inventory
-                foreach (SerializableItemData item in userData.Items)
-                {
-                    inventory.AddItem(item);
-                }
-            }
-            
-            inventory.Initialize();
-            
-            ShowFormattedCoins();
-        }
-        catch (Exception e)
+        userData = JsonUtility.FromJson<UserDataResponse>(response).ToUserData(api,id);
+           
+        //In case the user has no items we add the item Basic Sword
+        if (userData.Items == null || userData.Items.Length == 0)
         {
-            //TODO: Servers down menu
-            Debug.LogError(e);
-            return;
+            //Debug.Log("No items" + response);
+            inventory.AddItem(Items.GLOCK);
         }
+        else
+        {
+            //We add the items to the inventory
+            foreach (SerializableItemData item in userData.Items)
+            {
+                inventory.AddItem(item);
+            }
+        }
+            
+        inventory.Initialize();
+            
+        ShowFormattedCoins();
+        
         
         if (userData == null)
         {
@@ -287,19 +291,24 @@ public class Player : Entity
 
         //DevAddObject();
 
-        if (canMove) 
+        if (canMove)
         {
-            if (GameManager.Instance.CurrentRoom != Rooms.SHOOTER)
+            Rooms name = GameManager.Instance.CurrentRoom;
+            switch (name)
             {
-                HandleCharacterInput();
-            }else
-            {
-                ShooterRoomConfiguration shooterRoomConfiguration = (ShooterRoomConfiguration)RoomConfiguration.Instance;
-
-                if (shooterRoomConfiguration.IsPlaying)
-                {
+                case Rooms.LOBBY:
                     HandleCharacterInput();
-                }
+                    break;
+                case Rooms.HUNGER_GAMES:
+                    HungerGamesRoomConfiguration hungerGamesRoomConfiguration = (HungerGamesRoomConfiguration) RoomConfiguration.Instance;
+                    if (!hungerGamesRoomConfiguration.IsSpectating && hungerGamesRoomConfiguration.IsPlaying)
+                    {
+                        HandleCharacterInput();
+                    }
+                    break;
+                default:
+                    HandleCharacterInput();
+                    break;
             }
         }
         
@@ -307,7 +316,7 @@ public class Player : Entity
         
         HandleVoidTP();
 
-        HandleMouseFocus();
+        //HandleMouseFocus();
         
         HandleRaycast();
         
@@ -377,6 +386,7 @@ public class Player : Entity
     
     public void Resume()
     {
+        Debug.Log("Resuming player");
         canMove = true;
     }
 
@@ -702,16 +712,19 @@ public class Player : Entity
     
     public override void Die(bool restore = true)
     {
+        if (!PV.IsMine) return;
+        
         //TODO
         if (restore)
         {
             //RestorePlayer();
         }
         
-        Destroy(GameManager.Instance.gameObject);
-        Destroy(ChatManager.Instance.gameObject);
+        SaveObjectsData();
         
-        Invoke(nameof(Lobby), 1f);
+        SaveCoins();
+        
+        Lobby();
     }
 
     private void Lobby()
@@ -722,16 +735,16 @@ public class Player : Entity
     public void WinHungerGames()
     {
         //We add 1000 coins then we show a popup satisfying the user and then we wait 5 seconds to go to the lobby
-        AddCoins(1000);
+        AddCoins(10000);
         
         Debug.LogError("Congratulations you won the Hunger Games!!!");
         
         MenuManager.Instance.PopUp("Congratulations you won the Hunger Games!!!");
         
-        Invoke(nameof(GoToLobby), 5.0f);
+        SaveCoins();
+        SaveObjectsData();
         
-        Destroy(GameManager.Instance.gameObject);
-        Destroy(ChatManager.Instance.gameObject);
+        Invoke(nameof(GoToLobby), 10.0f);
     }
     
     public void GoToLobby()
@@ -790,7 +803,6 @@ public class Player : Entity
     private void OnApplicationQuit()
     {
         SaveObjectsData();
-        
         SaveCoins();
     }
     
@@ -853,5 +865,18 @@ public class Player : Entity
         userData.RemoveCoins(coins);
         
         ShowFormattedCoins();
+    }
+
+    public void HitCrosshair()
+    {
+        //Animation using DOTween
+        hitCrosshair.DOFade(1, 0.1f).OnComplete(() => hitCrosshair.DOFade(0, 0.1f));
+        
+        //TODO: Sound of hit player
+    }
+
+    public void UpdateAmmoUI()
+    {
+        inventory.UpdateItemText();
     }
 }

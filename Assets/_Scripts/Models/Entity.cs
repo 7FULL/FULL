@@ -9,6 +9,10 @@ public abstract class Entity: MonoBehaviour
     private int _armor = 100;
     private int _maxArmor = 100;
     
+    [SerializeField]
+    [InspectorName("Collider")]
+    private Collider _collider;
+    
     private PhotonView pv;
 
     public PhotonView PV => pv;
@@ -48,6 +52,12 @@ public abstract class Entity: MonoBehaviour
     
     public bool TakeDamageRPC(int damage)
     {
+        //If the entity is going to die for the damage, before communicating it to the other players, we will disable the collider
+        if (_health <= damage)
+        {
+            _collider.enabled = false;
+        }
+        
         pv.RPC("TakeDamage", RpcTarget.All, damage);
         
         return _health <= 0;

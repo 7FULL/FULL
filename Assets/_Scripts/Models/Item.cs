@@ -3,7 +3,6 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
-//TODO: Make this abstract in case it is needed as well as some other classes that inherit from this one
 public abstract class Item: MonoBehaviour
 {
     [SerializeField]
@@ -38,6 +37,9 @@ public abstract class Item: MonoBehaviour
     {
         _isFloorColliderActive = active;
         _floorCollider.enabled = active;
+        
+        //Floor collider ignores collisions with player
+        Physics.IgnoreCollision(_floorCollider, GameManager.Instance.Player.Character.GetComponent<Collider>());
         
         //TODO: Rotation animation
     }

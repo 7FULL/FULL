@@ -28,8 +28,12 @@ public class ChatManager : MonoBehaviour
         {
             Instance = this;
         }
+        else
+        {
+            Destroy(this.gameObject);
+        }
         
-        DontDestroyOnLoad(this.gameObject);
+        //DontDestroyOnLoad(this.gameObject);
     }
 
     private void Start()

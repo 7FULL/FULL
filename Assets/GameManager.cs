@@ -12,8 +12,6 @@ public class GameManager : MonoBehaviourPunCallbacks
     {
 	    public static GameManager Instance;
 
-	    private GameObject instance;
-
 	    [Tooltip("The prefab to spawn when the player joins the room")]
         [SerializeField]
         private GameObject playerPrefab;
@@ -48,29 +46,40 @@ public class GameManager : MonoBehaviourPunCallbacks
         [SerializeField] private GameObject loadingCanvas;
 
         [SerializeField] private TMP_InputField contactInput;
+        
+        [SerializeField]
+        [InspectorName("Opacar Imagen")]
+        private GameObject opacarImagen;
+
+        public override void OnEnable()
+        {
+	        base.OnEnable();
+	        
+	        JoinRoom(SceneManager.GetActiveScene().name);
+        }
 
         private void Awake()
         {
 	        PhotonNetwork.ConnectUsingSettings();
+
+	        if (Instance == null)
+	        {
+		        Instance = this;
+	        }
+	        else
+	        {
+		        Destroy(this.gameObject);
+	        }
 	        
-	        Instance = this;
+	        //PhotonNetwork.AutomaticallySyncScene = true;
 	        
-	        PhotonNetwork.AutomaticallySyncScene = true;
-	        
-	        SceneManager.sceneLoaded += OnSceneLoaded;
-	        
-	        DontDestroyOnLoad(this.gameObject);
+	        //DontDestroyOnLoad(this.gameObject);
         }
         
         public void EnableChat()
 		{
 	        chat.SetActive(true);
 		}
-
-        private void OnSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
-		{
-			JoinRoom(scene.name);
-		} 
         
         public void JoinRoom(Rooms room)
         {
@@ -181,7 +190,11 @@ public class GameManager : MonoBehaviourPunCallbacks
 		        {
 			        EnableChat();
 			        this.player.EnableMainCanvas();
-			        this.player.Resume();
+			        //this.player.Resume();
+			        
+			        videoPlayer.transform.parent.gameObject.SetActive(false);
+			        loadingCanvas.SetActive(false);
+			        opacarImagen.SetActive(false);
 		        }
 		        else
 		        {

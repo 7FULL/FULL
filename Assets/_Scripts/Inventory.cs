@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using Photon.Pun;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -44,6 +46,14 @@ public class Inventory : MenuUtils
     [SerializeField]
     [InspectorName("Empty item prefab")]
     private GameObject emptyItemPrefab;
+    
+    [SerializeField]
+    [InspectorName("Crosshair")]
+    private Image crosshair;
+    
+    [SerializeField]
+    [InspectorName("Crosshair default")]
+    private Sprite crosshairDefault;
     
     private Item currentItem;
     
@@ -137,7 +147,13 @@ public class Inventory : MenuUtils
             }
         }
         
-        Item itemToAddToInventory = Instantiate(ItemManager.Instance.GetItem(itemToAdd).prefab, inventoryContainer.transform).GetComponent<Item>();
+        Item itemToAddToInventory = PhotonNetwork.Instantiate(Path.Combine("ItemsPrefabs", ItemManager.Instance.GetItem(itemToAdd).prefab.name), Vector3.zero, Quaternion.identity).GetComponent<Item>();
+        GameObject o;
+        (o = itemToAddToInventory.gameObject).transform.SetParent(inventoryContainer.transform);
+        
+        //Reset the position and rotation of the item
+        o.transform.localPosition = Vector3.zero;
+        o.transform.localRotation = Quaternion.identity;
         
         bool aux = false;
         
@@ -171,7 +187,15 @@ public class Inventory : MenuUtils
             }
         }
         
-        Item itemObject = Instantiate(item.ItemData.prefab, inventoryContainer.transform).GetComponent<Item>();
+        Item itemObject = PhotonNetwork.Instantiate(Path.Combine("ItemsPrefabs", item.ItemData.prefab.name), Vector3.zero, Quaternion.identity).GetComponent<Item>();
+
+        GameObject o;
+        (o = itemObject.gameObject).transform.SetParent(inventoryContainer.transform);
+        
+        //Reset the position and rotation of the item
+        o.transform.localPosition = Vector3.zero;
+        o.transform.localRotation = Quaternion.identity;
+        
         itemObject.Initialize(item.ItemData, item.Quantity);
         
         bool aux = false;
@@ -207,7 +231,15 @@ public class Inventory : MenuUtils
         }
         
         ItemData itemData = ItemManager.Instance.GetItem(serializableItemData.name);
-        Item itemToAdd = Instantiate(itemData.prefab, inventoryContainer.transform).GetComponent<Item>();
+        Item itemToAdd = PhotonNetwork.Instantiate(Path.Combine("ItemsPrefabs", itemData.prefab.name), Vector3.zero, Quaternion.identity).GetComponent<Item>();
+
+        GameObject o;
+        (o = itemToAdd.gameObject).transform.SetParent(inventoryContainer.transform);
+        
+        //Reset the position and rotation of the item
+        o.transform.localPosition = Vector3.zero;
+        o.transform.localRotation = Quaternion.identity;
+        
         itemToAdd.Initialize(itemData, serializableItemData.quantity);
         
         bool aux = false;
@@ -345,6 +377,21 @@ public class Inventory : MenuUtils
         }
         
         UpdateItemText();
+        
+        UpdateCrosshair();
+    }
+    
+    private void UpdateCrosshair()
+    {
+        crosshair.sprite = crosshairDefault;
+        
+        if (currentItem != null)
+        {
+            if (currentItem is Gun gun)
+            {
+                crosshair.sprite = gun.GetCrosshair();
+            }
+        }
     }
     
     public void UpdateItemText()

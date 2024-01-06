@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Photon.Pun;
 using UnityEngine;
 
+[RequireComponent(typeof(PhotonView))]
 public class RoomConfiguration : MonoBehaviourPunCallbacks
 {
     //Singleton
@@ -22,6 +23,10 @@ public class RoomConfiguration : MonoBehaviourPunCallbacks
     [SerializeField]
     [InspectorName("Stop player on enter")]
     public bool StopPlayerOnEnter = true;
+    
+    private PhotonView pv;
+    
+    public PhotonView PV => pv;
 
     private void Awake()
     {
@@ -31,6 +36,8 @@ public class RoomConfiguration : MonoBehaviourPunCallbacks
         }
         
         _availableSpawnPoints = new bool[_spawnPoints.Length];
+        
+        pv = GetComponent<PhotonView>();
         
         ConfigureRoom();
     }
