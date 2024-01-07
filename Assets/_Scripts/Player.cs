@@ -342,6 +342,12 @@ public class Player : Entity
     private void FixedUpdate()
     {
         if (!PV.IsMine || !canMove) return;
+        
+        //Check for life
+        if (Health <= 0)
+        {
+            Die();
+        }
 
         if (isRequestingContact)
         {
@@ -381,7 +387,7 @@ public class Player : Entity
 
     private void HandleItemUse()
     {
-        if (Input.GetMouseButton(0))
+        if (Input.GetMouseButton(0) && !inventory.IsOpen)
         {
             if (inventory.CurrentItem != null)
             {
@@ -590,6 +596,12 @@ public class Player : Entity
         {
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
+        }
+        
+        if (Input.GetMouseButtonDown(0) && Cursor.lockState == CursorLockMode.None)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
         }
     }
 

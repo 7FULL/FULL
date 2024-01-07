@@ -64,7 +64,7 @@ public class MenuManager: MonoBehaviour
         }
         
         //Hide the crosshair if the menu is not a call menu
-        if (menu != Menu.CALL && menu != Menu.CALLING && menu != Menu.VIDEO_CALL && menu != Menu.RECEIVE_CALL)
+        if (menu != Menu.CALL && menu != Menu.CALLING && menu != Menu.VIDEO_CALL && menu != Menu.RECEIVE_CALL && menu != Menu.CONTACT_REQUEST)
         {
             crossHair.SetActive(false);
         }
@@ -72,9 +72,6 @@ public class MenuManager: MonoBehaviour
         {
             crossHair.SetActive(true);
         }
-        
-        Debug.Log("Menu opened: " + menu);
-        Debug.Log("Current menu: " + currentMenu.MenuType);
     }
 
     private void Update()
