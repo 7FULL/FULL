@@ -171,7 +171,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         public void AddContact()
         {
-	        Player player = SocialManager.Instance.RequestContact;
+	        Player player = SocialManager.Instance.ContactToAdd;
 	        
 	        Debug.Log("Add contact" + player.ID + " " + contactInput.text);
 

@@ -80,6 +80,8 @@ public class Inventory : MenuUtils
     
     public override void OpenAnimation()
     {
+        if (!pv.IsMine) return;
+        
         base.OpenAnimation();
         
         LoadContacts();
@@ -144,6 +146,8 @@ public class Inventory : MenuUtils
     
     public void AddItem(Items itemToAdd)
     {
+        if (!pv.IsMine) return;
+        
         //If theres already an item with the same name, add it to the stack
         foreach (Item item in items)
         {
@@ -157,12 +161,10 @@ public class Inventory : MenuUtils
         Item itemToAddToInventory = PhotonNetwork.Instantiate(Path.Combine("ItemsPrefabs", ItemManager.Instance.GetItem(itemToAdd).prefab.name), Vector3.zero, Quaternion.identity).GetComponent<Item>();
         GameObject o;
         o = itemToAddToInventory.gameObject;
+
+        int id = o.GetComponent<PhotonView>().ViewID;
         
-        pv.RPC("SetParent", RpcTarget.All, o.GetComponent<PhotonView>().ViewID);
-        
-        //Reset the position and rotation of the item
-        o.transform.localPosition = Vector3.zero;
-        o.transform.localRotation = Quaternion.identity;
+        pv.RPC("SetParent", RpcTarget.AllBuffered, id);
         
         bool aux = false;
         
@@ -178,23 +180,16 @@ public class Inventory : MenuUtils
         
         if (!aux)
         {
-            items.Add(itemToAddToInventory);
+            pv.RPC("AddItem", RpcTarget.AllBuffered, id);
         }
         
         Initialize(false);
     }
-    
-    [PunRPC]
-    public void SetParent(int o)
-    {
-        //We found the gameobject with the photonview id
-        GameObject gameObject = PhotonView.Find(o).gameObject;
-        
-        gameObject.transform.SetParent(inventoryContainer.transform);
-    }
 
     public void  AddItem(Item item)
     {
+        if (!pv.IsMine) return;
+        
         //If theres already an item with the same name, add it to the stack
         foreach (Item item2 in items)
         {
@@ -209,8 +204,9 @@ public class Inventory : MenuUtils
 
         GameObject o;
         o = itemObject.gameObject;
+        int id = o.GetComponent<PhotonView>().ViewID;
         
-        pv.RPC("SetParent", RpcTarget.All, o.GetComponent<PhotonView>().ViewID);
+        pv.RPC("SetParent", RpcTarget.AllBuffered, id);
         
         //Reset the position and rotation of the item
         o.transform.localPosition = Vector3.zero;
@@ -232,7 +228,7 @@ public class Inventory : MenuUtils
         
         if (!aux)
         {
-            items.Add(itemObject);
+            pv.RPC("AddItem", RpcTarget.AllBuffered, id);
         }
         
         Initialize(false);
@@ -240,6 +236,8 @@ public class Inventory : MenuUtils
     
     public void AddItem(SerializableItemData serializableItemData)
     {
+        if (!pv.IsMine) return;
+        
         //If theres already an item with the same name, add it to the stack
         foreach (Item item in items)
         {
@@ -256,7 +254,9 @@ public class Inventory : MenuUtils
         GameObject o;
         o = itemToAdd.gameObject;
         
-        pv.RPC("SetParent", RpcTarget.All, o.GetComponent<PhotonView>().ViewID);
+        int id = o.GetComponent<PhotonView>().ViewID;
+        
+        pv.RPC("SetParent", RpcTarget.AllBuffered, id);
         
         //Reset the position and rotation of the item
         o.transform.localPosition = Vector3.zero;
@@ -278,7 +278,7 @@ public class Inventory : MenuUtils
         
         if (!aux)
         {
-            items.Add(itemToAdd);
+            pv.RPC("AddItem", RpcTarget.AllBuffered, id);
         }
         
         Initialize(false);
@@ -314,6 +314,8 @@ public class Inventory : MenuUtils
 
     private void Update()
     {
+        if (!pv.IsMine) return;
+        
         //If  mouse scroll up, select the next item and if mouse scroll down, select the previous item from the principal inventory
         if (Input.GetAxis("Mouse ScrollWheel") < 0f)
         {
@@ -386,17 +388,8 @@ public class Inventory : MenuUtils
             
         principalInventorySlots[currentSlot].Select();
         
-        //We disable every item in the inventory
-        for (int i = 0; i < inventoryContainer.transform.childCount; i++)
-        {
-            inventoryContainer.transform.GetChild(i).gameObject.SetActive(false);
-        }
-        
         //We enable the item we want to display
-        if (inventoryContainer.transform.childCount > currentSlot)
-        {
-            inventoryContainer.transform.GetChild(currentSlot).gameObject.SetActive(true);
-        }
+        pv.RPC("SetGameObjects", RpcTarget.AllBuffered, currentSlot);
         
         UpdateItemText();
         
@@ -511,6 +504,29 @@ public class Inventory : MenuUtils
     private void UpdateItemsGameobject()
     {
         //We update the position of the items in the inventory
+        pv.RPC("SetItems", RpcTarget.AllBuffered);
+        
+        ConfigureItems();
+    }
+
+    [PunRPC]
+    public void SetGameObjects(int index)
+    {
+        //We disable every item in the inventory
+        for (int i = 0; i < inventoryContainer.transform.childCount; i++)
+        {
+            inventoryContainer.transform.GetChild(i).gameObject.SetActive(false);
+        }
+
+        if (inventoryContainer.transform.childCount > index)
+        {
+            inventoryContainer.transform.GetChild(index).gameObject.SetActive(true);
+        }
+    }
+
+    [PunRPC]
+    public void SetItems()
+    {
         for (int i = 0; i < items.Count; i++)
         {
             if (items[i] != null)
@@ -525,7 +541,26 @@ public class Inventory : MenuUtils
                 emptyItem.transform.SetSiblingIndex(i);
             }
         }
+    }
+
+    [PunRPC]
+    public void AddItem(int id)
+    {
+        GameObject gameObject = PhotonView.Find(id).gameObject;
         
-        ConfigureItems();
+        items.Add(gameObject.GetComponent<Item>());
+    }
+    
+    [PunRPC]
+    public void SetParent(int o)
+    {
+        //We found the gameobject with the photonview id
+        GameObject gameObject = PhotonView.Find(o).gameObject;
+        
+        gameObject.transform.SetParent(inventoryContainer.transform);
+        
+        //Reset the position and rotation of the item
+        gameObject.transform.localPosition = Vector3.zero;
+        gameObject.transform.localRotation = Quaternion.identity;
     }
 }

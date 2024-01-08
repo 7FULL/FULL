@@ -17,7 +17,7 @@ public class Gun: Item
     
     [SerializeField]
     [InspectorName("Muzzle Flash")]
-    private GameObject _muzzleFlash;
+    private ParticleSystem _muzzleFlash;
     
     [SerializeField]
     [InspectorName("Gun Tip")]
@@ -155,7 +155,9 @@ public class Gun: Item
                 {
                     if (hit.collider.gameObject.CompareTag("Player"))
                     {
-                        bool dead = hit.collider.gameObject.GetComponentInParent<Entity>().TakeDamageRPC(GunData.damage);
+                        Entity entity = hit.collider.gameObject.GetComponentInParent<Entity>();
+                        
+                        bool dead = entity.TakeDamage(GunData.damage, entity.PV);
                         
                         //Crosshair hit
                         GameManager.Instance.Player.HitCrosshair();
@@ -178,7 +180,7 @@ public class Gun: Item
                 
                 if (useMuzzleFlash)
                 {
-                    pv.RPC("MuzzleFlash", RpcTarget.All);
+                    pv.RPC("MuzzleFlash", RpcTarget.All, gunTip.position, gunTip.rotation);
                 }
             }
         }
@@ -208,13 +210,14 @@ public class Gun: Item
     }
     
     [PunRPC]
-    public void MuzzleFlash()
+    public void MuzzleFlash(Vector3 position, Quaternion rotation)
     {
-        GameObject muzzle= Instantiate(_muzzleFlash, gunTip.position, gunTip.rotation);
-        muzzle.transform.SetParent(gunTip.transform);
-        Destroy(muzzle,1);
+        //GameObject muzzle= Instantiate(_muzzleFlash, gunTip.position, gunTip.rotation);
+        //muzzle.transform.SetParent(gunTip.transform);
+        //Destroy(muzzle,5);
+        _muzzleFlash.Play();
                     
         //Play shoot sound
-        AudioManager.Instance.PlaySound(GunData.shootSound, gunTip.position);
+        AudioManager.Instance.PlaySound(GunData.shootSound, transform.position);
     }
 }

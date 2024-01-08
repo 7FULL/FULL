@@ -22,9 +22,12 @@ public class SocialManager : MonoBehaviour
     
     private Contact contact;
     private Player requestContact;
+    private Player contactToAdd;
     
     public Contact Contact => contact;
     public Player RequestContact => requestContact;
+    
+    public Player ContactToAdd => contactToAdd;
     
     private bool isOnCall = false;
     
@@ -316,7 +319,7 @@ public class SocialManager : MonoBehaviour
         {
             isReceivingContactRequest = false;
         
-            requestContact = null;
+            contactToAdd = null;
         }
     }
     
@@ -324,7 +327,7 @@ public class SocialManager : MonoBehaviour
     {
         isReceivingContactRequest = true;
         
-        requestContact = player;
+        contactToAdd = player;
         
         //Check if the player is already in the contact list
         Contact[] contacts = GameManager.Instance.Player.Contacts;
@@ -355,16 +358,16 @@ public class SocialManager : MonoBehaviour
             return;
         }
         
-        requestContact = player;
+        contactToAdd = player;
 
         MenuManager.Instance.PopUp("New contact request");
     }
     
     public void AcceptContactRequest()
     {
-        if (requestContact != null)
+        if (contactToAdd != null)
         {
-            GameManager.Instance.Player.PV.RPC("AcceptContactRequestRPC", requestContact.PV.Controller);
+            GameManager.Instance.Player.PV.RPC("AcceptContactRequestRPC", contactToAdd.PV.Controller);
 
             MenuManager.Instance.OpenMenu(Menu.CONTACT_REQUEST);
             

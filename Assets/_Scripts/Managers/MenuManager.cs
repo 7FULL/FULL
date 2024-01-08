@@ -35,9 +35,12 @@ public class MenuManager: MonoBehaviour
     {
         if (currentMenu.MenuGameObject != null)
         {
-            MenuUtils iMenu = currentMenu.MenuGameObject.GetComponent<MenuUtils>();
+            if (currentMenu.MenuType != Menu.CALL && currentMenu.MenuType != Menu.CALLING && currentMenu.MenuType != Menu.VIDEO_CALL && currentMenu.MenuType != Menu.RECEIVE_CALL && currentMenu.MenuType != Menu.CONTACT_REQUEST)
+            {
+                MenuUtils iMenu = currentMenu.MenuGameObject.GetComponent<MenuUtils>();
             
-            iMenu.CloseAnimation();
+                iMenu.CloseAnimation();
+            }
         }
         
         foreach (MenuStruct menuStruct in menus)
@@ -107,6 +110,11 @@ public class MenuManager: MonoBehaviour
             Cursor.visible = false;
             
             GameManager.Instance.Player.Resume();
+        }
+        else
+        {
+            //Just in case we close all of them
+            ToGame();
         }   
     }
     
@@ -216,6 +224,19 @@ public class MenuManager: MonoBehaviour
                 menus.RemoveAt(i);
             }
         }
+    }
+    
+    public bool CanShoot()
+    {
+        if (currentMenu.MenuGameObject == null)
+        {
+            return true;
+        }
+
+        return currentMenu.MenuType is Menu.CALL 
+            or Menu.CALLING 
+            or Menu.VIDEO_CALL 
+            or Menu.RECEIVE_CALL;
     }
 }
 

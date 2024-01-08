@@ -9,6 +9,7 @@ using Photon.Pun;
 using Photon.Pun.Demo.PunBasics;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Rendering.PostProcessing;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
@@ -98,6 +99,14 @@ public class Player : Entity
     [InspectorName("Hit crosshair")]
     private Image hitCrosshair;
     
+    [SerializeField]
+    [InspectorName("PostProcessVolume")]
+    private PostProcessVolume postProcessVolume;
+    
+    private Vignette vignette;
+    
+    private float vignetIntensity = 0;
+    
     private bool canMove = false;
 
     private ApiClient api;
@@ -111,6 +120,8 @@ public class Player : Entity
     private int startedRequestTime = 0;
     
     private GameObject contactRequest;
+    
+    private bool isVignetteChanging = false;
     
     [SerializeField]
     [InspectorName("Contact Time Out")]
@@ -153,6 +164,8 @@ public class Player : Entity
             Character.enabled = false;
             CharacterCamera.enabled = false;
             
+            postProcessVolume.enabled = false;
+            
             // Whe desactivate the sound source of the player child 
             //GetComponentInChildren<AudioSource>().enabled = false;
         }
@@ -180,9 +193,34 @@ public class Player : Entity
             
             // We change the name of the player
             gameObject.name = playerName;
+            
+            postProcessVolume.profile.TryGetSettings<Vignette>(out vignette);
+            
+            vignette.enabled.Override(false);
         }
     }
     
+    IEnumerator TakeDamageEffect()
+    {
+        isVignetteChanging = true;
+        vignette.enabled.Override(true);
+
+        float startTime = Time.time;
+        float duration = 1f;
+
+        while (Time.time - startTime < duration)
+        {
+            float t = (Time.time - startTime) / duration;
+            vignette.intensity.Override(Mathf.Lerp(0.4f, 0f, t));
+            yield return null;
+        }
+
+        vignette.intensity.Override(0f);
+        vignette.enabled.Override(false);
+        isVignetteChanging = false;
+    }
+
+
     public void RefreshContacts()
     {
         if (userData.Contacts == null) return;
@@ -372,7 +410,7 @@ public class Player : Entity
                 else
                 {
                     //If we are receiving a contact request we check if the request is from the same player
-                    if (contactRequest.GetComponentInParent<Player>().ID == SocialManager.Instance.RequestContact.ID)
+                    if (contactRequest.GetComponentInParent<Player>().ID == SocialManager.Instance.ContactToAdd.ID)
                     {
                         SocialManager.Instance.AcceptContactRequest();
                     }
@@ -387,7 +425,7 @@ public class Player : Entity
 
     private void HandleItemUse()
     {
-        if (Input.GetMouseButton(0) && !inventory.IsOpen)
+        if (Input.GetMouseButton(0) && MenuManager.Instance.CanShoot())
         {
             if (inventory.CurrentItem != null)
             {
@@ -396,7 +434,19 @@ public class Player : Entity
             }
         }
     }
-    
+
+    public override bool TakeDamage(int damage, PhotonView playerToKill =  null)
+    {
+        bool x = base.TakeDamage(damage, playerToKill);
+
+        if (playerToKill != null)
+        {
+            PV.RPC("AnimateHit", playerToKill.Controller);
+        }
+        
+        return x;
+    }
+
     public void Stop() 
     {
         canMove = false;
@@ -487,7 +537,7 @@ public class Player : Entity
     {
         yield return new WaitForSecondsRealtime(contactTimeOut);
         
-        if (isRequestingContact && SocialManager.Instance.IsReceivingContactRequest && SocialManager.Instance.RequestContact == null)
+        if (isRequestingContact && SocialManager.Instance.IsReceivingContactRequest && SocialManager.Instance.ContactToAdd == null)
         {
             isRequestingContact = false;
             requestTime = startedRequestTime;
@@ -665,7 +715,7 @@ public class Player : Entity
 
     private void Chat()
     {
-        if (Input.GetKeyDown(KeyCode.T) && SocialManager.Instance.RequestContact == null && !SocialManager.Instance.IsReceivingContactRequest)
+        if (Input.GetKeyDown(KeyCode.T) && SocialManager.Instance.ContactToAdd == null && !SocialManager.Instance.IsReceivingContactRequest)
         {
             ChatManager.Instance.FocusChat();
         }
@@ -676,6 +726,19 @@ public class Player : Entity
     void CallRPC(string callerID, string channelName, bool videoCall)
     {
         SocialManager.Instance.ReceiveCall(callerID, channelName, videoCall);
+    }
+    
+    [PunRPC]
+    public void AnimateHit()
+    {
+        if (isVignetteChanging)
+        {
+            StopCoroutine("TakeDamageEffect");
+            vignette.intensity.value = 0.4f;
+            isVignetteChanging = false;
+        }
+
+        StartCoroutine("TakeDamageEffect");
     }
     
     [PunRPC]
