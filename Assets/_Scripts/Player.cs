@@ -115,6 +115,8 @@ public class Player : Entity
 
     private UserData userData;
     
+    public string StreamKey => userData.StreamKey;
+    
     public Contact[] Contacts => userData.Contacts;
     
     private bool isRequestingContact = false;
@@ -227,7 +229,7 @@ public class Player : Entity
 
     public void RefreshContacts()
     {
-        if (userData.Contacts == null) return;
+        if (userData == null || userData.Contacts == null) return;
         
         Contact[] contactsAux = userData.Contacts;
         

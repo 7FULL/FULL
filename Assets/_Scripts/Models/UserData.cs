@@ -8,6 +8,10 @@ public class UserData
     public Contact[] Contacts => contacts;
 
     private int coins;
+    
+    private string streamKey;
+    
+    public string StreamKey => streamKey;
 
     private string id;
     
@@ -19,13 +23,14 @@ public class UserData
     
     private ApiClient api;
     
-    public UserData(Contact[] contacts, int coins, string id, ApiClient api, SerializableItemData[] items)
+    public UserData(Contact[] contacts, int coins, string id, ApiClient api, SerializableItemData[] items, string streamKey)
     {
         this.contacts = contacts;
         this.coins = coins;
         this.id = id;
         this.api = api;
         this.items = items;
+        this.streamKey = streamKey;
         
         Check();
     }
@@ -141,12 +146,15 @@ public class UserDataResponse
     public int coins;
     
     public SerializableItemData[] items;
+    
+    public string streamKey;
 
-    public UserDataResponse(ContactResponse[] contacts, int coins, SerializableItemData[] items)
+    public UserDataResponse(ContactResponse[] contacts, int coins, SerializableItemData[] items, string streamKey)
     {
         this.contacts = contacts;
         this.coins = coins;
         this.items = items;
+        this.streamKey = streamKey;
     }
     
     public UserData ToUserData(ApiClient api, string id)
@@ -158,7 +166,7 @@ public class UserDataResponse
             newContacts[i] = contacts[i].ToContact();
         }
         
-        UserData userData = new UserData(newContacts, coins, id, api, items);
+        UserData userData = new UserData(newContacts, coins, id, api, items, streamKey);
         
         return userData;
     }

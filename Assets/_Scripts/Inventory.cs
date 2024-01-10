@@ -70,6 +70,10 @@ public class Inventory : MenuUtils
     [InspectorName("Streaming container")]
     private GameObject streamingContainer;
     
+    [SerializeField]
+    [InspectorName("Streaming info")]
+    private TMP_Text streamingInfo;
+    
     private PhotonView pv;
     
     private Item currentItem;
@@ -99,6 +103,7 @@ public class Inventory : MenuUtils
         LoadContacts();
         LoadItem();
         LoadStreams();
+        LoadStreamInfo();
         
         isOpen = true;
     }
@@ -118,12 +123,19 @@ public class Inventory : MenuUtils
         {
             Destroy(child.gameObject);
         }
-        
-        foreach (Contact contact in GameManager.Instance.Player.Contacts)
+
+        try
         {
-            GameObject contactObject = Instantiate(contactPrefab, conocidosContainer.transform);
-            ContactDisplay contactObjectScript = contactObject.GetComponent<ContactDisplay>();
-            contactObjectScript.Configure(contact);
+            foreach (Contact contact in GameManager.Instance.Player.Contacts)
+            {
+                GameObject contactObject = Instantiate(contactPrefab, conocidosContainer.transform);
+                ContactDisplay contactObjectScript = contactObject.GetComponent<ContactDisplay>();
+                contactObjectScript.Configure(contact);
+            }
+        }
+        catch (Exception e)
+        {
+            //Console.WriteLine(e);
         }
     }
 
@@ -144,6 +156,11 @@ public class Inventory : MenuUtils
                 streamingObjectScript.Configure(stream, this);
             }
         }));
+    }
+
+    private void LoadStreamInfo()
+    {
+        streamingInfo.text = $"nameOfYourStream?key={GameManager.Instance.Player.StreamKey}&username={GameManager.Instance.Player.ID}";
     }
     
     public void StartSpectatingStreaming(string streamName)
