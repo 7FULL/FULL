@@ -57,6 +57,18 @@ public class Inventory : MenuUtils
     [SerializeField]
     [InspectorName("Crosshair default")]
     private Sprite crosshairDefault;
+
+    [SerializeField] 
+    [InspectorName("Streaming")]
+    private HISPlayerSample streaming;
+    
+    [SerializeField]
+    [InspectorName("Streaming prefab")]
+    private GameObject streamingPrefab;
+    
+    [SerializeField]
+    [InspectorName("Streaming container")]
+    private GameObject streamingContainer;
     
     private PhotonView pv;
     
@@ -86,6 +98,7 @@ public class Inventory : MenuUtils
         
         LoadContacts();
         LoadItem();
+        LoadStreams();
         
         isOpen = true;
     }
@@ -112,6 +125,51 @@ public class Inventory : MenuUtils
             ContactDisplay contactObjectScript = contactObject.GetComponent<ContactDisplay>();
             contactObjectScript.Configure(contact);
         }
+    }
+
+    private void LoadStreams()
+    {
+        // We acces the callbakcs of the function
+        StartCoroutine(SocialManager.Instance.GetStreams((streams) =>
+        {
+            foreach (Transform child in streamingContainer.transform)
+            {
+                Destroy(child.gameObject);
+            }
+            
+            foreach (string stream in streams)
+            {
+                GameObject streamingObject = Instantiate(streamingPrefab, streamingContainer.transform);
+                StreamingDisplay streamingObjectScript = streamingObject.GetComponent<StreamingDisplay>();
+                streamingObjectScript.Configure(stream, this);
+            }
+        }));
+    }
+    
+    public void StartSpectatingStreaming(string streamName)
+    {
+        string baseUrl = "http://localhost:8080/hls/";
+        streaming.multiStreamProperties[0].url[0] = baseUrl + streamName + ".m3u8";
+            
+        streaming.gameObject.SetActive(true);
+        streaming.OnRestart();
+        
+        GameManager.Instance.Player.Stop();
+        
+        Cursor.lockState = CursorLockMode.Confined;
+        Cursor.visible = true;
+    }
+    
+    public void StopSpectatingStreaming()
+    {
+        MenuManager.Instance.CloseMenu();
+        
+        streaming.gameObject.SetActive(false);
+        
+        GameManager.Instance.Player.Resume();
+        
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     private void LoadItem()

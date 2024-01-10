@@ -106,6 +106,8 @@ public class Player : Entity
     private Vignette vignette;
     
     private float vignetIntensity = 0;
+
+    private float originalMovementSpeed = 0;
     
     private bool canMove = false;
 
@@ -171,6 +173,8 @@ public class Player : Entity
         }
         else
         {
+            originalMovementSpeed = Character.MaxStableMoveSpeed;
+            
             api = GameManager.Instance.ApiClient;
 
             GetUserInfo();
@@ -450,11 +454,15 @@ public class Player : Entity
     public void Stop() 
     {
         canMove = false;
+        
+        Character.MaxStableMoveSpeed = 0;
     }
     
     public void Resume()
     {
         canMove = true;
+        
+        Character.MaxStableMoveSpeed = originalMovementSpeed;
     }
 
     private void Over(string letra, string mensaje)
@@ -522,6 +530,7 @@ public class Player : Entity
         characterInputs.JumpDown = Input.GetKeyDown(KeyCode.Space);
         characterInputs.CrouchDown = Input.GetKeyDown(KeyCode.C);
         characterInputs.CrouchUp = Input.GetKeyUp(KeyCode.C);
+        characterInputs.Sprint = Input.GetKey(KeyCode.LeftShift);
 
         // Apply inputs to character
         Character.SetInputs(ref characterInputs);

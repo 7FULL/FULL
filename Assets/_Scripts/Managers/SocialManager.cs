@@ -1,9 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Xml;
 using Agora.Rtc;
 using Photon.Pun;
 using UnityEngine;
+using UnityEngine.Networking;
 using Random = UnityEngine.Random;
 
 public class SocialManager : MonoBehaviour
@@ -392,6 +394,38 @@ public class SocialManager : MonoBehaviour
         rtcEngine.InitEventHandler(null);
         rtcEngine.LeaveChannel();
         rtcEngine.Dispose();
+    }
+
+    public IEnumerator GetStreams(Action<List<string>> callback)
+    {
+        string url = "http://localhost:8080/stat";
+
+        using (UnityWebRequest www = UnityWebRequest.Get(url))
+        {
+            yield return www.SendWebRequest();
+
+            if (www.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError("Error en la solicitud: " + www.error);
+            }
+            else
+            {
+                string data = www.downloadHandler.text;
+
+                XmlDocument xmlDoc = new XmlDocument();
+                xmlDoc.LoadXml(data);
+
+                XmlNodeList streamElements = xmlDoc.GetElementsByTagName("stream");
+                List<string> aux = new List<string>();
+
+                for (int i = 0; i < streamElements.Count; i++)
+                {
+                    aux.Add(streamElements[i].SelectSingleNode("name").InnerText);
+                }
+
+                callback(aux);
+            }
+        }
     }
 }
 
