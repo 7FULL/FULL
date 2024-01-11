@@ -79,6 +79,11 @@ public class GameManager : MonoBehaviourPunCallbacks
 	        {
 		        Destroy(this.gameObject);
 	        }
+
+	        if (SceneManager.GetActiveScene() != SceneManager.GetSceneByName(mainRoom.ToString()))
+	        {
+		        videoPlayer.transform.parent.gameObject.SetActive(false);
+	        }
 	        
 	        //PhotonNetwork.AutomaticallySyncScene = true;
 	        
@@ -212,6 +217,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 		        }
 		        else
 		        {
+			        videoPlayer.transform.parent.gameObject.SetActive(true);
 			        StartCoroutine(WaitForVideo());
 		        }
 		        

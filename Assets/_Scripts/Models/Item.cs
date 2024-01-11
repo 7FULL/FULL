@@ -85,8 +85,13 @@ public abstract class Item: MonoBehaviour
     {
         if (_isFloorColliderActive && other.CompareTag("Player"))
         {
-            other.GetComponentInParent<Player>().AddItem(this);
-            Destroy(gameObject);
+            Player player = other.GetComponentInParent<Player>();
+
+            if (player.PV.IsMine)
+            {
+                player.AddItem(this);
+                Destroy(gameObject);
+            }
         }
     }
 

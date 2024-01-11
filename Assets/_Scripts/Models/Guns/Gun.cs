@@ -60,6 +60,12 @@ public class Gun: Item
         
         _recoilsScript = GameManager.Instance.Player.RecoilScript;
     }
+    
+    public void RestartAmmo()
+    {
+        leftAmmo = GunData.magazineSize * GunData.maxMagazines;
+        currentAmmo = GunData.magazineSize;
+    }
 
     public virtual void Reload()
     {
@@ -156,6 +162,11 @@ public class Gun: Item
                     if (hit.collider.gameObject.CompareTag("Player"))
                     {
                         Entity entity = hit.collider.gameObject.GetComponentInParent<Entity>();
+
+                        if (entity.PV.IsMine)
+                        {
+                            return;
+                        }
                         
                         bool dead = entity.TakeDamage(GunData.damage, entity.PV);
                         

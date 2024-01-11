@@ -27,6 +27,10 @@ public class HungerGamesRoomConfiguration : RoomConfiguration
     [Tooltip("The number of people to start the game")]
     private int _peopleToPlay = 2;
     
+    [SerializeField]
+    [InspectorName("Zone")]
+    private HungerGamesZone _zone;
+    
     private bool _isPlaying = false;
     
     private bool _hasStartedCounting = false;
@@ -165,6 +169,8 @@ public class HungerGamesRoomConfiguration : RoomConfiguration
         MenuManager.Instance.PopUp("THE HUNGER GAMES HAS STARTED");
         
         CanPlayerUseItems = true;
+        
+        _zone.StartZone();
     }
 
     public override void OnPlayerEnteredRoom(Photon.Realtime.Player newPlayer)
@@ -199,6 +205,9 @@ public class HungerGamesRoomConfiguration : RoomConfiguration
         });
         
         isSpectating = true;
+        
+        //We disable the zone for the spectators
+        _zone.gameObject.SetActive(false);
     }
 
     public override void OnPlayerLeftRoom(Photon.Realtime.Player otherPlayer)

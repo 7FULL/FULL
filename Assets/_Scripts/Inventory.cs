@@ -268,6 +268,16 @@ public class Inventory : MenuUtils
         //If theres already an item with the same name, add it to the stack
         foreach (Item item2 in items)
         {
+            //If it is a gun, we reload it
+            if (item2 is Gun gun)
+            {
+                if (gun.ItemData.name == item.ItemData.name)
+                {
+                    gun.RestartAmmo();
+                    return;
+                }
+            }
+            
             if (item2.ItemData.name == item.ItemData.name)
             {
                 item2.Add(1);

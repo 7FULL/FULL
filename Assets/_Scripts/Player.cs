@@ -137,7 +137,12 @@ public class Player : Entity
     private Recoil recoilScript;
     
     public Recoil RecoilScript => recoilScript;
-    
+
+    private void OnEnable()
+    {
+        originalMovementSpeed = Character.MaxStableMoveSpeed;
+    }
+
     private void Start()
     {
         // The request time is updated because the fixed update executes 50 times per second
@@ -175,8 +180,6 @@ public class Player : Entity
         }
         else
         {
-            originalMovementSpeed = Character.MaxStableMoveSpeed;
-            
             api = GameManager.Instance.ApiClient;
 
             GetUserInfo();
@@ -465,6 +468,8 @@ public class Player : Entity
         canMove = true;
         
         Character.MaxStableMoveSpeed = originalMovementSpeed;
+        
+        Debug.Log("adad");
     }
 
     private void Over(string letra, string mensaje)
@@ -914,16 +919,6 @@ public class Player : Entity
     {
         SaveObjectsData();
         SaveCoins();
-    }
-    
-    public void AddItem(Items item)
-    {
-        inventory.AddItem(item);
-    }
-    
-    public void AddItem(SerializableItemData item)
-    {
-        inventory.AddItem(item);
     }
     
     public void AddItem(Item item)
