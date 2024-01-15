@@ -388,7 +388,7 @@ public class Inventory : MenuUtils
     
     public void AddItem(SerializableItemData serializableItemData)
     {
-        if (!pv.IsMine) return;
+        if (pv == null || !pv.IsMine) return;
         
         //If theres already an item with the same name, add it to the stack
         foreach (Item item in items)

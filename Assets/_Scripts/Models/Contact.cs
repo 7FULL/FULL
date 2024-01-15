@@ -56,3 +56,16 @@ public class ContactResponse
         return new Contact(name, id);
     }
 }
+
+[Serializable]
+public class TopContactResponse
+{
+    public string name;
+    public int coins;
+    
+    public TopContactResponse(string name, int coins)
+    {
+        this.name = name;
+        this.coins = coins;
+    }
+}

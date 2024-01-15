@@ -63,6 +63,10 @@ public class GameManager : MonoBehaviourPunCallbacks
         [Tooltip("Is this a production build?")]
         private bool prodBuild = false;
         
+        [SerializeField]
+        [InspectorName("Top coin tesxts")]
+        private TMP_Text[] topCoinTexts;
+        
         public bool ProdBuild => prodBuild;
         
         private bool isInMaintenance = false;
@@ -107,6 +111,11 @@ public class GameManager : MonoBehaviourPunCallbacks
 	        {
 		        // if remote config fetch failed, use default value
 		        isInMaintenance = true;
+
+		        if (player != null)
+		        {
+			        Destroy(player);
+		        }
 	        }
 	        
 	        Debug.Log("En mantenimiento: " + isInMaintenance);
@@ -118,7 +127,27 @@ public class GameManager : MonoBehaviourPunCallbacks
 		        videoPlayer.gameObject.transform.parent.gameObject.SetActive(false);
 	        }
         }
-        
+
+        public void ConfigureTopCoins()
+        {
+	        if (topCoinTexts.Length > 0)
+	        {
+		        for (int i = 0; i < player.TopContacts.Length; i++)
+		        {
+			        for (int j = 0; j < topCoinTexts.Length; j++)
+			        {
+				        topCoinTexts[j].text += player.TopContacts[i].name + ": " + player.TopContacts[i].coins + "\n";
+			        }
+		        }
+	        }
+	        else
+	        {
+		        for (int j = 0; j < topCoinTexts.Length; j++)
+		        {
+			        topCoinTexts[j].text = "There are no contacts";
+			    }
+	        }
+        }
 
         public override void OnEnable()
         {

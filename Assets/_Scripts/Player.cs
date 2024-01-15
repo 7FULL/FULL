@@ -118,6 +118,8 @@ public class Player : Entity
     
     public string StreamKey => userData.StreamKey;
     
+    public TopContactResponse[] TopContacts => userData.TopContacts;
+    
     public Contact[] Contacts => userData.Contacts;
     
     private bool isRequestingContact = false;
@@ -257,6 +259,7 @@ public class Player : Entity
         }
     }
     
+    [Button]
     private async void GetUserInfo()
     {
         string uniqueIdentifier = SystemInfo.deviceUniqueIdentifier;
@@ -266,7 +269,7 @@ public class Player : Entity
             uniqueIdentifier = "1";
         }
 
-        if (!GameManager.Instance.ProdBuild)
+        if (GameManager.Instance != null && !GameManager.Instance.ProdBuild)
         {
             if (Debug.isDebugBuild)
             {
@@ -284,10 +287,19 @@ public class Player : Entity
 
         api.Post("contact", json);
         */
-        
-        PV.RPC("UpdateIDRPC", RpcTarget.AllBuffered, uniqueIdentifier);
+
+        if (PV != null)
+        {
+            PV.RPC("UpdateIDRPC", RpcTarget.AllBuffered, uniqueIdentifier);
+        }
 
         string response = "";
+
+        //This is only when calling this function from the editor
+        if (api == null)
+        {
+            api = new ApiClient("http://localhost:3000/api/");
+        }
         
         response = await api.Post("user", uniqueIdentifier);
 
@@ -307,17 +319,24 @@ public class Player : Entity
                 inventory.AddItem(item);
             }
         }
-            
-        inventory.Initialize();
-            
-        ShowFormattedCoins();
-        
-        
-        if (userData == null)
+
+        if (GameManager.Instance != null)
         {
-            Debug.LogError("User data is null");
+            GameManager.Instance.ConfigureTopCoins();
         }
-        /*#region Just for development
+
+        if (Application.isPlaying)
+        {
+            inventory.Initialize();
+            
+            ShowFormattedCoins();
+        
+        
+            if (userData == null)
+            {
+                Debug.LogError("User data is null");
+            }
+            /*#region Just for development
             uniqueIdentifier = Random.Range(0, 1000000).ToString();
             // We find the other player
             Player other = GameObject.Find("Player(Clone)").GetComponent<Player>();
@@ -329,13 +348,14 @@ public class Player : Entity
             }
         #endregion*/
 
-        RefreshContacts();
+            RefreshContacts();
         
-        // We save the data every 5 min
-        InvokeRepeating("SaveObjectsData", 1, 300);
+            // We save the data every 5 min
+            InvokeRepeating("SaveObjectsData", 1, 300);
         
-        // We save the coins every 5 min
-        InvokeRepeating("SaveCoins", 300, 300);
+            // We save the coins every 5 min
+            InvokeRepeating("SaveCoins", 300, 300);
+        }
     }
 
     private void Update()
