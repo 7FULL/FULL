@@ -1,13 +1,18 @@
 ﻿using System;
 using System.Collections;
+using System.Threading.Tasks;
 using Photon.Pun;
 using Photon.Realtime;
 using SunTemple;
 using TMPro;
+using Unity.Services.RemoteConfig;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
 using UnityEngine.Video;
+using Unity.RemoteConfig;
+using Unity.Services.Authentication;
+using Unity.Services.Core;
 
 public class GameManager : MonoBehaviourPunCallbacks
     {
@@ -59,6 +64,61 @@ public class GameManager : MonoBehaviourPunCallbacks
         private bool prodBuild = false;
         
         public bool ProdBuild => prodBuild;
+        
+        private bool isInMaintenance = false;
+        
+        public struct userAttributes {}
+        public struct appAttributes {}
+
+        async Task InitializeRemoteConfigAsync()
+        {
+	        // initialize handlers for unity game services
+	        await UnityServices.InitializeAsync();
+
+	        // remote config requires authentication for managing environment information
+	        if (!AuthenticationService.Instance.IsSignedIn)
+	        {
+		        await AuthenticationService.Instance.SignInAnonymouslyAsync();
+	        }
+        }
+
+        async void Start()
+        {
+	        // initialize Unity's authentication and core services, however check for internet connection
+	        // in order to fail gracefully without throwing exception if connection does not exist
+	        if (Utilities.CheckForInternetConnection())
+	        {
+		        await InitializeRemoteConfigAsync();
+	        }
+
+	        RemoteConfigService.Instance.FetchCompleted += ApplyRemoteSettings;
+	        RemoteConfigService.Instance.FetchConfigs(new userAttributes(), new appAttributes());
+        }
+
+        void ApplyRemoteSettings(ConfigResponse configResponse)
+        {
+	        // check if remote config has been fetched successfully
+	        if (configResponse.status == ConfigRequestStatus.Success)
+	        {
+		        // get the value of the key "isInMaintenance" as a bool
+		        isInMaintenance = !RemoteConfigService.Instance.appConfig.GetBool("online");
+	        }
+	        else
+	        {
+		        // if remote config fetch failed, use default value
+		        isInMaintenance = true;
+	        }
+	        
+	        Debug.Log("En mantenimiento: " + isInMaintenance);
+
+	        if (isInMaintenance)
+	        {
+		        MenuManager.Instance.OpenMenu(Menu.MANTENANCE);
+		        
+		        videoPlayer.gameObject.transform.parent.gameObject.SetActive(false);
+	        }
+        }
+        
 
         public override void OnEnable()
         {
@@ -193,7 +253,7 @@ public class GameManager : MonoBehaviourPunCallbacks
 
         public override void OnJoinedRoom()
         {
-	        if (player == null)
+	        if (player == null && !isInMaintenance)
 	        {
 		        if (SceneManager.GetActiveScene().name != mainRoom.ToString())
 		        {
@@ -229,7 +289,14 @@ public class GameManager : MonoBehaviourPunCallbacks
 	        }
 	        else
 	        {
-		        Debug.Log("Connected to room but player already instantiated");
+		        if (isInMaintenance)
+		        {
+			        videoPlayer.gameObject.transform.parent.gameObject.SetActive(false);
+		        }
+		        else
+		        {
+			        Debug.Log("Connected to room but player already exists");
+		        }
 	        }
         }
 

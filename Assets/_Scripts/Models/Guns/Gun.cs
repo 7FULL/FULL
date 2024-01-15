@@ -1,10 +1,9 @@
 ﻿using System;
 using DG.Tweening;
 using Photon.Pun;
+using Sirenix.OdinInspector;
 using UnityEngine;
 
-
-[RequireComponent(typeof(PhotonView))]
 public class Gun: Item
 {
     private GunData GunData;
@@ -16,16 +15,17 @@ public class Gun: Item
     public int CurrentAmmo => currentAmmo;
     
     [SerializeField]
+    [InspectorName("Use Muzzle Flash")]
+    private bool useMuzzleFlash;
+    
+    [SerializeField]
     [InspectorName("Muzzle Flash")]
+    [ShowIf("useMuzzleFlash")]
     private ParticleSystem _muzzleFlash;
     
     [SerializeField]
     [InspectorName("Gun Tip")]
     private Transform gunTip;
-    
-    [SerializeField]
-    [InspectorName("Use Muzzle Flash")]
-    private bool useMuzzleFlash;
     
     private float shootTimer;
     

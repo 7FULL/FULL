@@ -1,8 +1,11 @@
 ﻿using System;
+using Photon.Pun;
 using UnityEngine;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
+[RequireComponent(typeof(PhotonView))]
+[RequireComponent(typeof(PhotonTransformView))]
 public abstract class Item: MonoBehaviour
 {
     [SerializeField]
@@ -92,6 +95,16 @@ public abstract class Item: MonoBehaviour
                 player.AddItem(this);
                 Destroy(gameObject);
             }
+        }
+    }
+    
+    public void Remove(int quantity)
+    {
+        _quantity -= quantity;
+        
+        if (_quantity <= 0)
+        {
+            GameManager.Instance.Player.RemoveItem(this);
         }
     }
 

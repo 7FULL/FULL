@@ -62,18 +62,24 @@ public class MenuManager: MonoBehaviour
         {
             Cursor.lockState = CursorLockMode.Confined;
             Cursor.visible = true;
-            
-            GameManager.Instance.Player.Stop();
+
+            if (GameManager.Instance.Player != null)
+            {
+                GameManager.Instance.Player.Stop();
+            }
         }
-        
-        //Hide the crosshair if the menu is not a call menu
-        if (menu != Menu.CALL && menu != Menu.CALLING && menu != Menu.VIDEO_CALL && menu != Menu.RECEIVE_CALL)
+
+        if (crossHair != null)
         {
-            crossHair.SetActive(false);
-        }
-        else
-        {
-            crossHair.SetActive(true);
+            //Hide the crosshair if the menu is not a call menu
+            if (menu != Menu.CALL && menu != Menu.CALLING && menu != Menu.VIDEO_CALL && menu != Menu.RECEIVE_CALL)
+            {
+                crossHair.SetActive(false);
+            }
+            else
+            {
+                crossHair.SetActive(true);
+            }
         }
     }
 
@@ -108,8 +114,11 @@ public class MenuManager: MonoBehaviour
             // Lock the mouse
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
-            
-            GameManager.Instance.Player.Resume();
+
+            if (GameManager.Instance.Player != null)
+            {
+                GameManager.Instance.Player.Resume();
+            }
         }
         else
         {

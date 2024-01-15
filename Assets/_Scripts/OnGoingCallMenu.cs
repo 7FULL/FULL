@@ -22,7 +22,10 @@ public class OnGoingCallMenu: MenuUtils
         {
             contact = SocialManager.Instance.Contact;
         }
-        
-        _contactName.text = contact.Name;
+
+        if (contact != null)
+        {
+            _contactName.text = contact.Name;
+        }
     }
 }

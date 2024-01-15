@@ -7,6 +7,7 @@ using KinematicCharacterController;
 using KinematicCharacterController.Examples;
 using Photon.Pun;
 using Photon.Pun.Demo.PunBasics;
+using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Rendering.PostProcessing;
@@ -443,6 +444,11 @@ public class Player : Entity
             }
         }
     }
+    
+    public void RemoveItem(Item item)
+    {
+        inventory.RemoveItem(item);
+    }
 
     public override bool TakeDamage(int damage, PhotonView playerToKill =  null)
     {
@@ -468,8 +474,6 @@ public class Player : Entity
         canMove = true;
         
         Character.MaxStableMoveSpeed = originalMovementSpeed;
-        
-        Debug.Log("adad");
     }
 
     private void Over(string letra, string mensaje)
@@ -577,11 +581,14 @@ public class Player : Entity
                 //We check if the player is already in our contacts
                 bool isInContacts = false;
 
-                foreach (Contact contact in userData.Contacts)
+                if (userData.Contacts != null)
                 {
-                    if (contact.ID == hit.collider.gameObject.GetComponentInParent<Player>().ID)
+                    foreach (Contact contact in userData.Contacts)
                     {
-                        isInContacts = true;
+                        if (contact.ID == hit.collider.gameObject.GetComponentInParent<Player>().ID)
+                        {
+                            isInContacts = true;
+                        }
                     }
                 }
 
@@ -875,6 +882,7 @@ public class Player : Entity
     }
     
     //Every 5 min we save the objects of the player
+    [Button]
     private void SaveObjectsData()
     {
         SerializableItemData[] itemsAux = inventory.GetItems();
@@ -905,6 +913,7 @@ public class Player : Entity
     }
     
     //Every 5 min we save the coins of the player
+    [Button]
     private void SaveCoins()
     {
         string json = "{";

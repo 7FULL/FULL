@@ -4,6 +4,7 @@ using UnityEngine;
 
 public enum ItemQuality
 {
+    Any,
     Common,
     Basic,
     Rare,

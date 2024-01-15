@@ -10,6 +10,8 @@ public class ItemInventoryDisplay : MonoBehaviour
     private Item item;
     private Inventory inventory;
     
+    public Item Item => item;
+    
     [SerializeField]
     [InspectorName("Item Image")]
     private Image itemImage;

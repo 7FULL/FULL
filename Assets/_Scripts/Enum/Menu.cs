@@ -8,4 +8,5 @@
     CALLING,
     VIDEO_CALL,
     CONTACT_REQUEST,
+    MANTENANCE,
 }

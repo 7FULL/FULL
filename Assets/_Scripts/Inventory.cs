@@ -74,9 +74,19 @@ public class Inventory : MenuUtils
     [InspectorName("Streaming info")]
     private TMP_Text streamingInfo;
     
+    [SerializeField]
+    [InspectorName("Dropdown quality filter")]
+    private TMP_Dropdown qualityFilter;
+    
+    [SerializeField]
+    [InspectorName("Dropdown type filter")]
+    private TMP_Dropdown typeFilter;
+    
     private PhotonView pv;
     
     private Item currentItem;
+
+    private ItemInventoryDisplay[] inventoryAux;
     
     public Item CurrentItem => currentItem;
     
@@ -87,6 +97,16 @@ public class Inventory : MenuUtils
         HasAnimation = true;
         
         pv = GetComponent<PhotonView>();
+
+        if (pv.IsMine)
+        {
+            //We load the dropdowns with the Enum values
+            qualityFilter.ClearOptions();
+            qualityFilter.AddOptions(new List<string>(Enum.GetNames(typeof(ItemQuality))));
+            
+            typeFilter.ClearOptions();
+            typeFilter.AddOptions(new List<string>(Enum.GetNames(typeof(ItemCategory))));
+        }
     }
 
     public void CloseOnCLick()
@@ -101,7 +121,7 @@ public class Inventory : MenuUtils
         base.OpenAnimation();
         
         LoadContacts();
-        LoadItem();
+        LoadItems();
         LoadStreams();
         LoadStreamInfo();
         
@@ -163,6 +183,18 @@ public class Inventory : MenuUtils
         streamingInfo.text = $"nameOfYourStream?key={GameManager.Instance.Player.StreamKey}&username={GameManager.Instance.Player.ID}";
     }
     
+    public void RemoveItem(Item item)
+    {
+        if (!pv.IsMine) return;
+        
+        int id = item.GetComponent<PhotonView>().ViewID;
+        
+        pv.RPC("RemoveItem", RpcTarget.AllBuffered, id);
+        
+        Initialize(false);
+        LoadItems();
+    }
+    
     public void StartSpectatingStreaming(string streamName)
     {
         string baseUrl = "http://localhost:8080/hls/";
@@ -189,8 +221,10 @@ public class Inventory : MenuUtils
         Cursor.visible = false;
     }
 
-    private void LoadItem()
+    private void LoadItems()
     {
+        List<ItemInventoryDisplay> aux = new List<ItemInventoryDisplay>();
+        
         foreach (Transform child in itemsContainer.transform)
         {
             Destroy(child.gameObject);
@@ -203,7 +237,40 @@ public class Inventory : MenuUtils
                 GameObject itemObject = Instantiate(itemPrefab, itemsContainer.transform);
                 ItemInventoryDisplay itemObjectScript = itemObject.GetComponent<ItemInventoryDisplay>();
                 itemObjectScript.Configure(items[i], this, i); 
+                
+                aux.Add(itemObjectScript);
             }
+        }
+        
+        inventoryAux = aux.ToArray();
+    }
+
+    public void Filter()
+    {
+        //We get the category enum from the dropdown
+        ItemCategory category = (ItemCategory) typeFilter.value;
+        
+        //We get the quality enum from the dropdown
+        ItemQuality quality = (ItemQuality) qualityFilter.value;
+        
+        foreach (ItemInventoryDisplay itemDisplay in inventoryAux)
+        {
+             //If the item is not null and the category and quality are not the same
+             if (itemDisplay.Item != null)
+             {
+                 if (itemDisplay.Item.ItemData.category != category && category != ItemCategory.ITEM)
+                 {
+                     itemDisplay.gameObject.SetActive(false);
+                 }
+                 else if (itemDisplay.Item.ItemData.quality != quality && quality != ItemQuality.Any)
+                 {
+                     itemDisplay.gameObject.SetActive(false);
+                 }
+                 else
+                 {
+                     itemDisplay.gameObject.SetActive(true);
+                 }
+             }
         }
     }
     
@@ -400,58 +467,61 @@ public class Inventory : MenuUtils
     private void Update()
     {
         if (!pv.IsMine) return;
-        
-        //If  mouse scroll up, select the next item and if mouse scroll down, select the previous item from the principal inventory
-        if (Input.GetAxis("Mouse ScrollWheel") < 0f)
+
+        if (!isOpen)
         {
-            if (currentSlot < principalInventorySlots.Length - 1)
+            //If  mouse scroll up, select the next item and if mouse scroll down, select the previous item from the principal inventory
+            if (Input.GetAxis("Mouse ScrollWheel") < 0f)
             {
-                currentSlot++;
-            }
-            else
-            {
-                currentSlot = 0;
-            }
+                if (currentSlot < principalInventorySlots.Length - 1)
+                {
+                    currentSlot++;
+                }
+                else
+                {
+                    currentSlot = 0;
+                }
             
-            ConfigureItems();
-        }
-        else if (Input.GetAxis("Mouse ScrollWheel") > 0f)
-        {
-            if (currentSlot > 0)
-            {
-                currentSlot--;
+                ConfigureItems();
             }
-            else
+            else if (Input.GetAxis("Mouse ScrollWheel") > 0f)
             {
-                currentSlot = principalInventorySlots.Length - 1;
-            }
+                if (currentSlot > 0)
+                {
+                    currentSlot--;
+                }
+                else
+                {
+                    currentSlot = principalInventorySlots.Length - 1;
+                }
             
-            ConfigureItems();
-        }
+                ConfigureItems();
+            }
         
-        //If we press a number, select the item in that slot
-        switch (Input.inputString)
-        {
-            case "1":
-                currentSlot = 0;
-                ConfigureItems();
-                break;
-            case "2":
-                currentSlot = 1;
-                ConfigureItems();
-                break;
-            case "3":
-                currentSlot = 2;
-                ConfigureItems();
-                break;
-            case "4":
-                currentSlot = 3;
-                ConfigureItems();
-                break;
-            case "5":
-                currentSlot = 4;
-                ConfigureItems();
-                break;
+            //If we press a number, select the item in that slot
+            switch (Input.inputString)
+            {
+                case "1":
+                    currentSlot = 0;
+                    ConfigureItems();
+                    break;
+                case "2":
+                    currentSlot = 1;
+                    ConfigureItems();
+                    break;
+                case "3":
+                    currentSlot = 2;
+                    ConfigureItems();
+                    break;
+                case "4":
+                    currentSlot = 3;
+                    ConfigureItems();
+                    break;
+                case "5":
+                    currentSlot = 4;
+                    ConfigureItems();
+                    break;
+            }
         }
     }
 
@@ -580,7 +650,7 @@ public class Inventory : MenuUtils
             items.Add(item);
         }
         
-        LoadItem();
+        LoadItems();
         Initialize(false);
         
         UpdateItemsGameobject();
@@ -642,10 +712,22 @@ public class Inventory : MenuUtils
         //We found the gameobject with the photonview id
         GameObject gameObject = PhotonView.Find(o).gameObject;
         
+        gameObject.GetComponent<BoxCollider>().enabled = false;
+        
         gameObject.transform.SetParent(inventoryContainer.transform);
         
         //Reset the position and rotation of the item
         gameObject.transform.localPosition = Vector3.zero;
         gameObject.transform.localRotation = Quaternion.identity;
+    }
+    
+    [PunRPC]
+    public void RemoveItem(int id)
+    {
+        GameObject gameObject = PhotonView.Find(id).gameObject;
+        
+        items.Remove(gameObject.GetComponent<Item>());
+        
+        Destroy(gameObject);
     }
 }

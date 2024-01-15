@@ -63,7 +63,7 @@ public abstract class Entity: MonoBehaviour
         return _health <= 0;
     }
     
-    public void Heal(int amount)
+    private void Heal(int amount)
     {
         _health += amount;
         if (_health > _maxHealth)
@@ -72,7 +72,7 @@ public abstract class Entity: MonoBehaviour
         }
     }
     
-    public void RestoreArmor(int amount)
+    private void RestoreArmor(int amount)
     {
         _armor += amount;
         if (_armor > _maxArmor)
@@ -82,6 +82,12 @@ public abstract class Entity: MonoBehaviour
     }
     
     public void RestoreHealthAndArmor(int healthAmount, int armorAmount)
+    {
+        pv.RPC("RestoreHealthAndArmorRPC", RpcTarget.All, healthAmount, armorAmount);
+    }
+    
+    [PunRPC]
+    public void RestoreHealthAndArmorRPC(int healthAmount, int armorAmount)
     {
         Heal(healthAmount);
         RestoreArmor(armorAmount);

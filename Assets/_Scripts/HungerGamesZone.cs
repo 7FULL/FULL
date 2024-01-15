@@ -61,12 +61,12 @@ public class HungerGamesZone : MonoBehaviour
             float reductionAmount = _initialScale.x / _reductionAmount;
             
             //We reduce the zone until it reaches the desired scale using DOTween
-            transform.DOScaleX(transform.localScale.x - reductionAmount, _reductionTime / _reductionVelocity).SetEase(Ease.Linear);
-            transform.DOScaleZ(transform.localScale.z - reductionAmount, _reductionTime / _reductionVelocity).SetEase(Ease.Linear);
+            transform.DOScaleX(transform.localScale.x - reductionAmount, _reductionTime / (_reductionVelocity - _reductions)).SetEase(Ease.Linear);
+            transform.DOScaleZ(transform.localScale.z - reductionAmount, _reductionTime / (_reductionVelocity - _reductions)).SetEase(Ease.Linear);
             
             _reductions++;
             _isReducing = false;
-            yield return new WaitForSeconds(_timeBetweenReductions + _reductionTime);
+            yield return new WaitForSecondsRealtime(_timeBetweenReductions + _reductionTime);
         }
     }
 
@@ -96,7 +96,7 @@ public class HungerGamesZone : MonoBehaviour
         {
             foreach (Player player in _players)
             {
-                player.TakeDamage(Mathf.RoundToInt(_damagePerSecond));
+                player.TakeDamage(Mathf.RoundToInt(_damagePerSecond * _reductions));
             }
             
             _timeSinceLastDamage = 0f;
