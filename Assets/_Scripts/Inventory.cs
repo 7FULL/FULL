@@ -541,6 +541,11 @@ public class Inventory : MenuUtils
 
     private void ConfigureItems()
     {
+        if (BuildingSystem.Instance != null)
+        {
+            BuildingSystem.Instance.CantBuild();
+        }
+        
         if (currentSlot < items.Count && items[currentSlot] != null)
         {
             currentItem = items[currentSlot];
