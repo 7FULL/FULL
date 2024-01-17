@@ -5,6 +5,7 @@ using System.IO;
 using Photon.Pun;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(PhotonView))]
@@ -82,6 +83,10 @@ public class Inventory : MenuUtils
     [InspectorName("Dropdown type filter")]
     private TMP_Dropdown typeFilter;
     
+    [SerializeField]
+    [InspectorName("Lobby button")]
+    private GameObject lobbyButton;
+    
     private PhotonView pv;
     
     private Item currentItem;
@@ -106,6 +111,15 @@ public class Inventory : MenuUtils
             
             typeFilter.ClearOptions();
             typeFilter.AddOptions(new List<string>(Enum.GetNames(typeof(ItemCategory))));
+        }
+
+        if (!GameManager.Instance.IsInMainRoom)
+        {
+            lobbyButton.SetActive(true);
+        }
+        else
+        {
+            lobbyButton.SetActive(false);
         }
     }
 

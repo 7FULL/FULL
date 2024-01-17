@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Photon.Pun;
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 [RequireComponent(typeof(PhotonView))]
@@ -48,6 +49,10 @@ public class RoomConfiguration : MonoBehaviourPunCallbacks
         {
             player.Stop();
         }
+        else
+        {
+            player.Resume();
+        }
     }
 
     public virtual void ConfigureRoom()
@@ -67,5 +72,24 @@ public class RoomConfiguration : MonoBehaviourPunCallbacks
         _availableSpawnPoints[spawnPointIndex] = true;
         
         return _spawnPoints[spawnPointIndex].position;
+    }
+
+    [Button]
+    private void GenerateSpawnPoints()
+    {
+        //We randomly spawn empty game objects in the room
+
+        int x = 500;
+        int z = 500;
+        int y = 2;
+        
+        int spawnPointsCount = 100;
+        
+        for (int i = 0; i < spawnPointsCount; i++)
+        {
+            GameObject spawnPoint = new GameObject("SpawnPoint " + (i+1));
+            spawnPoint.transform.position = new Vector3(UnityEngine.Random.Range(-x, x), y, UnityEngine.Random.Range(-z, z));
+            spawnPoint.transform.SetParent(transform);
+        }
     }
 }

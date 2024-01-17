@@ -2,5 +2,6 @@
 {
     LOBBY,
     MARKET_PLANET,
-    HUNGER_GAMES
+    HUNGER_GAMES,
+    FREE_BUILD
 }

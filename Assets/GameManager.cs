@@ -206,6 +206,8 @@ public class GameManager : MonoBehaviourPunCallbacks
         
         public void JoinRoom(string room)
         {
+	        currentRoom = (Rooms) Enum.Parse(typeof(Rooms), room);
+	        
 	        if (PhotonNetwork.InRoom)
 	        {
 		        PhotonNetwork.LeaveRoom();
@@ -217,8 +219,6 @@ public class GameManager : MonoBehaviourPunCallbacks
 	        }
 
 	        StartCoroutine(WaitForLoadScene(room));
-	        
-	        currentRoom = (Rooms) Enum.Parse(typeof(Rooms), room);
         }
 
         IEnumerator WaitForJoin(string room)
