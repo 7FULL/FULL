@@ -1,4 +1,5 @@
 ﻿using System;
+using DG.Tweening;
 using Photon.Pun;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -44,7 +45,8 @@ public abstract class Item: MonoBehaviour
         //Floor collider ignores collisions with player
         Physics.IgnoreCollision(_floorCollider, GameManager.Instance.Player.Character.GetComponent<Collider>());
         
-        //TODO: Rotation animation
+        //We do an animation rotation using DOTween
+        transform.DORotate(new Vector3(0, 360, 0), 1f, RotateMode.LocalAxisAdd).SetLoops(-1);
     }
 
     public void Drop()
