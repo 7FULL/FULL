@@ -8,31 +8,45 @@ public class EditBuildingCells: MonoBehaviour
     
     public bool IsEditing => isEditing;
 
-    private Image _image;
+    private Material _image;
     
     private void Awake()
     {
-        _image = GetComponent<Image>();
+        _image = GetComponent<MeshRenderer>().material;
     }
     
     public void Edit()
     {
         isEditing = !isEditing;
         
-        _image.color = isEditing ? new Color(12,150,226) : Color.white;
+        if (isEditing)
+        {
+            _image.color = Color.white;
+        }
+        else
+        {
+            _image.color = new Color(0.04517614f,0.5865791f,0.8867924f, 1);
+        }
     }
 
     public void Reset()
     {
         isEditing = false;
         
-        _image.color = new Color(12,150,226);
+        _image.color = new Color(0.04517614f,0.5865791f,0.8867924f, 1);
     }
     
     public void SetEditing(bool value)
     {
         isEditing = value;
-        
-        _image.color = !isEditing ? new Color(12,150,226) : Color.white;
+
+        if (isEditing)
+        {
+            _image.color = Color.white;
+        }
+        else
+        {
+            _image.color = new Color(0.04517614f,0.5865791f,0.8867924f, 1);
+        }
     }
 }

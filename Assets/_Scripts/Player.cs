@@ -178,6 +178,8 @@ public class Player : Entity
             
             postProcessVolume.enabled = false;
             
+            inventory.Crosshair.gameObject.SetActive(false);
+            
             // Whe desactivate the sound source of the player child 
             //GetComponentInChildren<AudioSource>().enabled = false;
         }
@@ -455,7 +457,7 @@ public class Player : Entity
 
     private void HandleItemUse()
     {
-        if (Input.GetMouseButton(0) && MenuManager.Instance.CanShoot())
+        if (Input.GetMouseButton(0) && MenuManager.Instance.CanShoot() && BuildingSystem.Instance != null && BuildingSystem.Instance.CanBuild)
         {
             if (inventory.CurrentItem != null)
             {

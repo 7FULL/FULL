@@ -649,9 +649,9 @@ public class Cell
                             if (aboveLeft != null)
                             {
                                 //Only if front wall is placed we can place the floor
-                                if (!aboveBack.IsAvailable(BuildingPosition.RIGHT)
-                                    || !aboveBack.IsAvailable(BuildingPosition.INSIDE)
-                                    || !aboveBack.IsAvailable(BuildingPosition.BOTTOM)
+                                if (!aboveLeft.IsAvailable(BuildingPosition.RIGHT)
+                                    || !aboveLeft.IsAvailable(BuildingPosition.INSIDE)
+                                    || !aboveLeft.IsAvailable(BuildingPosition.BOTTOM)
                                     )
                                 {
                                     aux = true;
