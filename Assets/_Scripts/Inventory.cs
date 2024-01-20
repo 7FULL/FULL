@@ -546,7 +546,7 @@ public class Inventory : MenuUtils
             BuildingSystem.Instance.CantBuild();
         }
         
-        if (currentSlot < items.Count && items[currentSlot] != null)
+        if (currentSlot < items.Count && currentSlot >= 0)
         {
             currentItem = items[currentSlot];
         }
@@ -560,7 +560,10 @@ public class Inventory : MenuUtils
             itemDisplay.UnSelect();
         }
             
-        principalInventorySlots[currentSlot].Select();
+        if (currentSlot < principalInventorySlots.Length && currentSlot >= 0)
+        {
+            principalInventorySlots[currentSlot].Select();
+        }
         
         //We enable the item we want to display
         pv.RPC("SetGameObjects", RpcTarget.AllBuffered, currentSlot);
@@ -568,6 +571,13 @@ public class Inventory : MenuUtils
         UpdateItemText();
         
         UpdateCrosshair();
+    }
+    
+    public void StartEditing()
+    {
+        currentSlot = -1;
+        
+        ConfigureItems();
     }
     
     private void UpdateCrosshair()
@@ -692,7 +702,7 @@ public class Inventory : MenuUtils
             inventoryContainer.transform.GetChild(i).gameObject.SetActive(false);
         }
 
-        if (inventoryContainer.transform.childCount > index)
+        if (inventoryContainer.transform.childCount > index && index >= 0)
         {
             inventoryContainer.transform.GetChild(index).gameObject.SetActive(true);
         }

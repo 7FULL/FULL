@@ -457,14 +457,23 @@ public class Player : Entity
 
     private void HandleItemUse()
     {
-        if (Input.GetMouseButton(0) && MenuManager.Instance.CanShoot() && BuildingSystem.Instance != null && BuildingSystem.Instance.CanBuild)
+        if (Input.GetMouseButton(0) && MenuManager.Instance.CanShoot())
         {
             if (inventory.CurrentItem != null)
             {
+                if (BuildingSystem.Instance != null && BuildingSystem.Instance.CanBuild)
+                {
+                    return;
+                }
                 inventory.CurrentItem.Use();
                 inventory.UpdateItemText();
             }
         }
+    }
+    
+    public void StartEditing()
+    {
+        inventory.StartEditing();
     }
     
     public void RemoveItem(Item item)
