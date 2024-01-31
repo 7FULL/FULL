@@ -20,6 +20,9 @@ public class MenuUtils: MonoBehaviour
     [InspectorName("Do translation")]
     private bool _doTranslation = true;
     
+    //On open event
+    public event Action OnOpen;
+    
     public bool HasAnimation
     {
         get => _hasAnimation;
@@ -62,6 +65,9 @@ public class MenuUtils: MonoBehaviour
                 transform.DOLocalMoveY(0, 0.5f).SetEase(Ease.OutBack);
             }
         }
+        
+        //We send the event on open
+        OnOpen?.Invoke();
     }
 
     public virtual void CloseAnimation()

@@ -72,6 +72,14 @@ public class Inventory : MenuUtils
     private GameObject streamingContainer;
     
     [SerializeField]
+    [InspectorName("DMS Conainer")]
+    private GameObject dmsContainer;
+    
+    [SerializeField]
+    [InspectorName("DMS Prefab")]
+    private GameObject dmPrefab;
+    
+    [SerializeField]
     [InspectorName("Streaming info")]
     private TMP_Text streamingInfo;
     
@@ -157,6 +165,11 @@ public class Inventory : MenuUtils
         {
             Destroy(child.gameObject);
         }
+        
+        foreach (Transform dm in dmsContainer.transform)
+        {
+            Destroy(dm.gameObject);
+        }
 
         try
         {
@@ -165,6 +178,13 @@ public class Inventory : MenuUtils
                 GameObject contactObject = Instantiate(contactPrefab, conocidosContainer.transform);
                 ContactDisplay contactObjectScript = contactObject.GetComponent<ContactDisplay>();
                 contactObjectScript.Configure(contact);
+                
+                GameObject dmObject = Instantiate(dmPrefab, dmsContainer.transform);
+                DMItem dmObjectScript = dmObject.GetComponent<DMItem>();
+                
+                bool connected = contact.PV != null;
+                
+                dmObjectScript.Configure(contact.Name, connected, contact.ID);
             }
         }
         catch (Exception e)

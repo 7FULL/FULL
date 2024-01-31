@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Threading.Tasks;
+using NSubstitute.Extensions;
 using Photon.Pun;
 using Photon.Realtime;
 using SunTemple;
@@ -69,7 +70,11 @@ public class GameManager : MonoBehaviourPunCallbacks
         
         public bool ProdBuild => prodBuild;
         
+        // Remote config variables
         private bool isInMaintenance = false;
+        private int minimumPeopleToPlayHG = 2;
+        private int startTimerHG = 20;
+        private string zoneSettingsHG = "";
         
         public struct userAttributes {}
         public struct appAttributes {}
@@ -106,6 +111,9 @@ public class GameManager : MonoBehaviourPunCallbacks
 	        {
 		        // get the value of the key "isInMaintenance" as a bool
 		        isInMaintenance = !RemoteConfigService.Instance.appConfig.GetBool("online");
+		        minimumPeopleToPlayHG = RemoteConfigService.Instance.appConfig.GetInt("minimumPeopleToPlayHG");
+		        startTimerHG = RemoteConfigService.Instance.appConfig.GetInt("startTimerHG");
+		        zoneSettingsHG = RemoteConfigService.Instance.appConfig.GetJson("zoneSettingsHG");
 	        }
 	        else
 	        {
@@ -119,12 +127,25 @@ public class GameManager : MonoBehaviourPunCallbacks
 	        }
 	        
 	        Debug.Log("En mantenimiento: " + isInMaintenance);
+	        Debug.Log("Minimum people to play HG: " + minimumPeopleToPlayHG);
+	        Debug.Log("Start timer HG: " + startTimerHG);
+	        Debug.Log("Zone settings HG: " + zoneSettingsHG);
 
 	        if (isInMaintenance)
 	        {
 		        MenuManager.Instance.OpenMenu(Menu.MANTENANCE);
 		        
 		        videoPlayer.gameObject.transform.parent.gameObject.SetActive(false);
+	        }
+	        
+	        //If we are in the hunger games room we configure it
+	        if (SceneManager.GetActiveScene().name == Rooms.HUNGER_GAMES.ToString())
+	        {
+		        ZoneSettingsRC settings = JsonUtility.FromJson<ZoneSettingsRC>(zoneSettingsHG);
+		        
+		        GameObject.FindObjectOfType<HungerGamesZone>().ConfigureZone(settings);
+		        
+		        FindObjectOfType<HungerGamesRoomConfiguration>().Configure(startTimerHG, minimumPeopleToPlayHG);
 	        }
         }
 

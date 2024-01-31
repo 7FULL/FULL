@@ -51,6 +51,15 @@ public class HungerGamesZone : MonoBehaviour
         StartCoroutine(ReduceZone());
     }
     
+    public void ConfigureZone(ZoneSettingsRC settings)
+    {
+        _reductionVelocity = settings.reduction_velocity;
+        _reductionTime = settings.reduction_time;
+        _reductionAmount = settings.reduction_amount;
+        _timeBetweenReductions = settings.time_between_reductions;
+        _damagePerSecond = settings.dps;
+    }
+    
     private IEnumerator ReduceZone()
     {
         //We reduce the zone once and then wait for the time between reductions
@@ -62,7 +71,7 @@ public class HungerGamesZone : MonoBehaviour
             
             //We reduce the zone until it reaches the desired scale using DOTween
             transform.DOScaleX(transform.localScale.x - reductionAmount, _reductionTime / (_reductionVelocity - _reductions)).SetEase(Ease.Linear);
-            transform.DOScaleZ(transform.localScale.z - reductionAmount, _reductionTime / (_reductionVelocity - _reductions)).SetEase(Ease.Linear);
+            transform.DOScaleZ(transform.localScale.z - reductionAmount, _reductionTime / (_reductionVelocity - _reductions )).SetEase(Ease.Linear);
             
             _reductions++;
             _isReducing = false;
@@ -102,4 +111,13 @@ public class HungerGamesZone : MonoBehaviour
             _timeSinceLastDamage = 0f;
         }
     }
+}
+
+public class ZoneSettingsRC
+{
+    public float reduction_velocity;
+    public float reduction_time;
+    public int reduction_amount;
+    public float time_between_reductions;
+    public int dps;
 }

@@ -28,5 +28,7 @@ public class PopUp: MenuUtils
     public void Configure(string text)
     {
         this.text.text = text;
+        
+        base.OpenAnimation();
     }
 }

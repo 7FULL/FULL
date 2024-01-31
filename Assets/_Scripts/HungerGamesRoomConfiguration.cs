@@ -49,6 +49,12 @@ public class HungerGamesRoomConfiguration : RoomConfiguration
         
         MenuManager.Instance.ClearNulls();
     }
+    
+    public void Configure(float timerToStart, int peopleToPlay)
+    {
+        timer = timerToStart;
+        _peopleToPlay = peopleToPlay;
+    }
 
     public override void HandlePlayer(Player player)
     {

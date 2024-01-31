@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 public class MenuManager: MonoBehaviour
@@ -10,6 +11,8 @@ public class MenuManager: MonoBehaviour
     
     private MenuStruct currentMenu;
     
+    [ReadOnly]
+    [SerializeField]
     private PopUp popup;
     
     private GameObject crossHair;
@@ -137,12 +140,14 @@ public class MenuManager: MonoBehaviour
         this.crossHair = crossHair;
     }
     
-    public void PopUp(string message)
+    public void PopUp(string message, bool closeMenu = true)
     {
-        CloseMenu();
+        if (closeMenu)
+        {
+            CloseMenu();
+        }
         
         popup.Configure(message);
-        popup.OpenAnimation();
         
         StartCoroutine(WaitToClosePopUp());
     }
@@ -170,6 +175,11 @@ public class MenuManager: MonoBehaviour
         {
             menus.Add(menuStruct);
         }
+    }
+    
+    public bool IsOpen(Menu menu)
+    {
+        return currentMenu.MenuType == menu;
     }
     
     /// <summary>

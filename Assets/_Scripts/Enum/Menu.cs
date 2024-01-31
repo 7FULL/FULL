@@ -9,4 +9,5 @@
     VIDEO_CALL,
     CONTACT_REQUEST,
     MANTENANCE,
+    CHAT_MENU
 }

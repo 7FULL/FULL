@@ -51,6 +51,10 @@ public class Player : Entity
     [SerializeField]
     private GameObject receiveCallCanvas;
     
+    [InspectorName("Chat menu")]
+    [SerializeField]
+    private ChatMenu chatMenu;
+    
     [InspectorName("OnGoingCall Canvas")] 
     [SerializeField]
     private GameObject onGoingCanvas;
@@ -139,6 +143,10 @@ public class Player : Entity
     [InspectorName("Recoil script")]
     private Recoil recoilScript;
     
+    [SerializeField]
+    [InspectorName("Ragdoll")]
+    private Ragdoll ragdoll;
+    
     public Recoil RecoilScript => recoilScript;
 
     private void OnEnable()
@@ -204,6 +212,7 @@ public class Player : Entity
             MenuManager.Instance.RegisterMenu(callingCanvas, Menu.CALLING, callingCanvas.GetComponent<OnGoingCallMenu>());
             MenuManager.Instance.RegisterMenu(videoCallCanvas, Menu.VIDEO_CALL, videoCallCanvas.GetComponent<OnGoingCallMenu>());
             MenuManager.Instance.RegisterMenu(inventory.gameObject, Menu.INVENTORY, inventory);
+            MenuManager.Instance.RegisterMenu(chatMenu.gameObject, Menu.CHAT_MENU, chatMenu);
             
             // We change the name of the player
             gameObject.name = playerName;
@@ -212,6 +221,19 @@ public class Player : Entity
             
             vignette.enabled.Override(false);
         }
+    }
+    
+    [PunRPC]
+    public void EnableRagdoll()
+    {
+        ragdoll.EnableRagdoll();
+        
+        inventory.StartEditing();
+    }
+    
+    public void EnableRagdollRPC()
+    {
+        PV.RPC("EnableRagdoll", RpcTarget.All);
     }
     
     IEnumerator TakeDamageEffect()
@@ -294,6 +316,8 @@ public class Player : Entity
         {
             PV.RPC("UpdateIDRPC", RpcTarget.AllBuffered, uniqueIdentifier);
         }
+        
+        SocialManager.Instance.StartDMSuscription(uniqueIdentifier);
 
         string response = "";
 
@@ -398,6 +422,8 @@ public class Player : Entity
         HandleInventory();
         
         Chat();
+        
+        DevPopUp();
 
         if (RoomConfiguration.Instance.CanPlayerUseItems)
         {
@@ -407,6 +433,14 @@ public class Player : Entity
         //DevCall();
 
         //DevRefreshContacts();
+    }
+
+    private void DevPopUp()
+    {
+        if (Input.GetKeyDown(KeyCode.L))
+        {
+            MenuManager.Instance.PopUp("This is a test");
+        }
     }
 
     private void FixedUpdate()
@@ -769,7 +803,7 @@ public class Player : Entity
 
     private void Chat()
     {
-        if (Input.GetKeyDown(KeyCode.T) && SocialManager.Instance.ContactToAdd == null && !SocialManager.Instance.IsReceivingContactRequest)
+        if (Input.GetKeyDown(KeyCode.T) && SocialManager.Instance.ContactToAdd == null && !SocialManager.Instance.IsReceivingContactRequest && !MenuManager.Instance.IsOpen(Menu.CHAT_MENU))
         {
             ChatManager.Instance.FocusChat();
         }
@@ -876,8 +910,10 @@ public class Player : Entity
         SaveObjectsData();
         
         SaveCoins();
-
-        Lobby();
+        
+        EnableRagdollRPC();
+        
+        Invoke(nameof(Lobby), 5.0f);
     }
 
     private void Lobby()

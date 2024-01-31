@@ -6,6 +6,11 @@ using Agora.Rtc;
 using Photon.Pun;
 using UnityEngine;
 using UnityEngine.Networking;
+using System.Net.WebSockets;
+using System.Text;
+using System.Threading;
+using SocketIOClient;
+using SocketIOClient.Newtonsoft.Json;
 using Random = UnityEngine.Random;
 
 public class SocialManager : MonoBehaviour
@@ -54,6 +59,14 @@ public class SocialManager : MonoBehaviour
     
     // In seconds
     private int callReponseTimeout = 15;
+    
+    private Uri uri = new Uri("http://localhost:3000");
+
+    private SocketIOUnity socket;
+    
+    private ChatMenu chatMenu;
+    
+    private Dictionary<string, List<DMS>> chatMessages = new Dictionary<string, List<DMS>>();
 
     private void Awake()
     {
@@ -67,6 +80,139 @@ public class SocialManager : MonoBehaviour
         }
     }
 
+    public void StartDMSuscription(string id)
+    {
+        socket = new SocketIOUnity(uri, new SocketIOOptions
+        {
+            Query = new Dictionary<string, string>
+            {
+                { "userID", id},
+                { "token", "patata" }
+            },
+            EIO = 4,
+            Transport = SocketIOClient.Transport.TransportProtocol.WebSocket
+        });
+        socket.JsonSerializer = new NewtonsoftJsonSerializer();
+        
+        socket.OnDisconnected += (sender, e) =>
+        {
+            Debug.Log("disconnect: " + e);
+        };
+        socket.OnReconnectAttempt += (sender, e) =>
+        {
+            Debug.Log($"{DateTime.Now} Reconnecting: attempt = {e}");
+        };
+        socket.OnError += (sender, e) =>
+        {
+            Debug.Log("error: " + e);
+        };
+        
+        socket.OnUnityThread("receive-dm", (response) =>
+        {
+            string msg = response.GetValue<string>(0);
+            string author = response.GetValue<string>(1);
+            
+            string authorName = "";
+            
+            foreach (Contact authorContact1 in GameManager.Instance.Player.Contacts)
+            {
+                if (authorContact1.ID == author)
+                {
+                    authorName = authorContact1.Name;
+                }
+            }
+            
+            if(authorName != "")
+            {
+                MenuManager.Instance.PopUp("New message from " + authorName, false);
+            }
+            
+            if (MenuManager.Instance.IsOpen(Menu.CHAT_MENU))
+            {
+                chatMenu.AddMessage(msg);
+            }
+            
+            if (chatMessages.ContainsKey(author + "-" + GameManager.Instance.Player.ID))
+            {
+                chatMessages[author + "-" + GameManager.Instance.Player.ID].Add(new DMS(msg, false));
+            }
+            else
+            {
+                chatMessages.Add(author + "-" + GameManager.Instance.Player.ID, new List<DMS>());
+                chatMessages[author + "-" + GameManager.Instance.Player.ID].Add(new DMS(msg, false));
+            }
+            
+            //If the chat is longer than 100 messages, remove the first one
+            if (chatMessages[author + "-" + GameManager.Instance.Player.ID].Count > 100)
+            {
+                chatMessages[author + "-" + GameManager.Instance.Player.ID].RemoveAt(0);
+            }
+        });
+        ////
+        
+        socket.Connect();
+    }
+    
+    public void SendDm(string id, string message)
+    {
+        socket.Emit("send-dm", message, GameManager.Instance.Player.ID, id);
+
+        id = id + "-" + GameManager.Instance.Player.ID;
+        
+        if (chatMessages.ContainsKey(id))
+        {
+            chatMessages[id].Add(new DMS(message, true));
+        }
+        else
+        {
+            chatMessages.Add(id, new List<DMS>());
+            chatMessages[id].Add(new DMS(message, true));
+        }
+        
+        //If the chat is longer than 100 messages, remove the first one
+        if (chatMessages[id].Count > 100)
+        {
+            chatMessages[id].RemoveAt(0);
+        }
+    }
+    
+    public void EnterDM(string userID)
+    {
+        //Search for the user in the contact list
+        Contact[] contacts = GameManager.Instance.Player.Contacts;
+        
+        Contact contactAux = null;
+        
+        foreach (Contact contact in contacts)
+        {
+            if (contact.ID == userID)
+            {
+                contactAux = contact;
+            }
+        }
+        
+        if (contactAux == null)
+        {
+            Debug.Log("Contact not found");
+            return;
+        }
+        
+        ChatMenu x = (ChatMenu)MenuManager.Instance.GetMenu(Menu.CHAT_MENU).Menu;
+        
+        DMS[] dms = Array.Empty<DMS>();
+        
+        if (chatMessages.ContainsKey(userID + "-" + GameManager.Instance.Player.ID))
+        {
+            dms = chatMessages[userID + "-" + GameManager.Instance.Player.ID].ToArray();
+        }
+        
+        x.Configure(contactAux, dms);
+        
+        chatMenu = x;
+
+        MenuManager.Instance.OpenMenu(Menu.CHAT_MENU);
+    }
+    
     private void Start()
     {
         // Init RTC Engine
@@ -426,6 +572,21 @@ public class SocialManager : MonoBehaviour
                 callback(aux);
             }
         }
+    }
+}
+
+public class DMS
+{
+    private string msg;
+    public string Msg => msg;
+
+    private bool sent;
+    public bool Sent => sent;
+    
+    public DMS(string message, bool sent)
+    {
+        this.msg = message;
+        this.sent = sent;
     }
 }
 
