@@ -164,6 +164,8 @@ public class Player : Entity
  
     private float nextFootstep = 0;
     
+    private bool left = true;
+    
     public Recoil RecoilScript => recoilScript;
 
     private void OnEnable()
@@ -480,6 +482,8 @@ public class Player : Entity
     {
         if (!PV.IsMine || !canMove) return;
         
+        SprintCameraMovement(Character.IsSprinting);
+        
         //Check for life
         if (Health <= 0)
         {
@@ -647,6 +651,30 @@ public class Player : Entity
         // Animation
         animator.SetFloat("x", characterInputs.MoveAxisForward, smoothBlendTransition, Time.deltaTime);
         animator.SetFloat("y", characterInputs.MoveAxisRight, smoothBlendTransition, Time.deltaTime);
+        
+        // Footsteps normal and sprint
+        // We check for movement to play the footstep sound
+        if (characterInputs.MoveAxisForward != 0 || characterInputs.MoveAxisRight != 0)
+        {
+            if (characterInputs.Sprint)
+            {
+                if (Time.time > (nextFootstep - 0.15f))
+                {
+                    nextFootstep = Time.time + footStepDelay;
+                
+                    AudioManager.Instance.PlaySound(footStepSound, CharacterCamera.Camera.transform.position);
+                }
+            }
+            else
+            {
+                if (Time.time > nextFootstep)
+                {
+                    nextFootstep = Time.time + footStepDelay;
+                
+                    AudioManager.Instance.PlaySound(footStepSound, CharacterCamera.Camera.transform.position);
+                }
+            }
+        }
     }
     
     #endregion
@@ -831,6 +859,36 @@ public class Player : Entity
             {
                 SocialManager.Instance.LeaveCall();
             }
+        }
+    }
+    
+    private void SprintCameraMovement(bool sprint)
+    {
+        //If sprinting we move the camera simulating the effect of the player running. We make it smooth by using DOTween and we move it side to side
+        if (sprint)
+        {
+            //We check the side and we move the camera to the opposite side
+            if (left)
+            {
+                CharacterCamera.Camera.transform.DOLocalMoveX(.05f, .35f);
+            }
+            else
+            {
+                CharacterCamera.Camera.transform.DOLocalMoveX(-.05f, .35f);
+            }
+            
+            if (CharacterCamera.Camera.transform.localPosition.x >= 0.025f)
+            {
+                left = false;
+            }
+            else if (CharacterCamera.Camera.transform.localPosition.x <= -0.025f)
+            {
+                left = true;
+            }
+        }
+        else
+        {
+            CharacterCamera.Camera.transform.DOLocalMoveX(0, .15f);
         }
     }
     
@@ -1105,5 +1163,10 @@ public class Player : Entity
     public void UpdateAmmoUI()
     {
         inventory.UpdateItemText();
+    }
+    
+    public void IncreaseSprintSpeed()
+    {
+        Character.SprintSpeed = Character.SprintSpeed * 2;
     }
 }

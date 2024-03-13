@@ -203,7 +203,8 @@ public class GameManager : MonoBehaviourPunCallbacks
 
 	        if (prodBuild)
 	        {
-		        apiClient = new ApiClient("https://full-apirest.onrender.com/api/");
+		        //TODO quitan comentario
+		        //apiClient = new ApiClient("https://full-apirest.onrender.com/api/");
 	        }
         }
         

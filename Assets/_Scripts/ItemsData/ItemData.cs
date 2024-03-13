@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 
 [CreateAssetMenu(fileName = "Item", menuName = "Items/Item", order = 0)]
-public abstract class ItemData: ScriptableObject
+public class ItemData: ScriptableObject
 {
     [TitleGroup("Item data")]
     [PreviewField(80, ObjectFieldAlignment.Left), HideLabel]
