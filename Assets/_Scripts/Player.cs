@@ -146,12 +146,31 @@ public class Player : Entity
     [SerializeField]
     [InspectorName("Ragdoll")]
     private Ragdoll ragdoll;
+
+    [SerializeField]
+    [InspectorName("Sprint FOV")]
+    private float sprintFOV = 60;
+    
+    private float originalFOV;
+    
+    [SerializeField]
+    [InspectorName("Footstep Sound")]
+    private AudioClip footStepSound;
+    
+    [SerializeField]
+    [InspectorName("Footstep Delay")]
+    [Tooltip("The time between each footstep sound")]
+    private float footStepDelay;
+ 
+    private float nextFootstep = 0;
     
     public Recoil RecoilScript => recoilScript;
 
     private void OnEnable()
     {
         originalMovementSpeed = Character.MaxStableMoveSpeed;
+        
+        originalFOV = CharacterCamera.Camera.GetComponent<Camera>().fieldOfView;
     }
 
     private void Start()
@@ -441,6 +460,20 @@ public class Player : Entity
         {
             MenuManager.Instance.PopUp("This is a test");
         }
+    }
+
+    public void ActivateScareMode()
+    {
+        //We activate Chromatic Aberration, Grain, Ambient Occlusion and Motion Blur
+        postProcessVolume.profile.TryGetSettings<ChromaticAberration>(out ChromaticAberration chromaticAberration);
+        postProcessVolume.profile.TryGetSettings<Grain>(out Grain grain);
+        postProcessVolume.profile.TryGetSettings<AmbientOcclusion>(out AmbientOcclusion ambientOcclusion);
+        postProcessVolume.profile.TryGetSettings<MotionBlur>(out MotionBlur motionBlur);
+        
+        chromaticAberration.enabled.Override(true);
+        grain.enabled.Override(true);
+        ambientOcclusion.enabled.Override(true);
+        motionBlur.enabled.Override(true);
     }
 
     private void FixedUpdate()
@@ -798,6 +831,19 @@ public class Player : Entity
             {
                 SocialManager.Instance.LeaveCall();
             }
+        }
+    }
+    
+    public void SprintFOV(bool sprint)
+    {
+        //We make it smooth by using DOTween
+        if (sprint)
+        {
+            CharacterCamera.Camera.DOFieldOfView(sprintFOV, 0.5f);
+        }
+        else
+        {
+            CharacterCamera.Camera.DOFieldOfView(originalFOV, 0.5f);
         }
     }
 

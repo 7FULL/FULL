@@ -60,7 +60,7 @@ public class SocialManager : MonoBehaviour
     // In seconds
     private int callReponseTimeout = 15;
     
-    private Uri uri = new Uri("http://localhost:3000");
+    private Uri uri = new Uri("http://localhost:3050");
 
     private SocketIOUnity socket;
     

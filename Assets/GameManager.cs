@@ -76,6 +76,8 @@ public class GameManager : MonoBehaviourPunCallbacks
         private int startTimerHG = 20;
         private string zoneSettingsHG = "";
         
+        private bool isReconnecting = false;
+        
         public struct userAttributes {}
         public struct appAttributes {}
 
@@ -372,6 +374,13 @@ public class GameManager : MonoBehaviourPunCallbacks
         public override void OnConnectedToMaster()
         {
 	        PhotonNetwork.JoinLobby();
+	        
+	        if (isReconnecting)
+	        {
+		        isReconnecting = false;
+		        
+		        SceneManager.LoadScene(mainRoom.ToString());
+	        }
         }
 
         public override void OnLeftLobby()
@@ -386,8 +395,13 @@ public class GameManager : MonoBehaviourPunCallbacks
         
         public void Reconnect()
 		{
+			isReconnecting = true;
+			
 	        // We try to connect and wait 5 seconds to check if we are connected
 	        PhotonNetwork.ConnectUsingSettings();     
+	        
+	        MenuManager.Instance.CloseMenu();
+	        
 	        Invoke(nameof(CheckConnection), 5f);
 		}
         
@@ -428,5 +442,10 @@ public class GameManager : MonoBehaviourPunCallbacks
 		public override void OnLeftRoom()
 		{
 			player = null;
+		}
+
+		public void LoadOfflineMinigame()
+		{
+			SceneManager.LoadScene("Minecraft");
 		}
     }

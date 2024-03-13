@@ -99,7 +99,10 @@ public class MenuManager: MonoBehaviour
     {
         if (currentMenu.MenuGameObject != null)
         {
-            crossHair.SetActive(true);
+            if (crossHair != null)
+            {
+                crossHair.SetActive(true);
+            }
             
             MenuUtils iMenu = currentMenu.MenuGameObject.GetComponent<MenuUtils>();
             
