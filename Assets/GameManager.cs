@@ -320,6 +320,11 @@ public class GameManager : MonoBehaviourPunCallbacks
 
 		        if (SceneManager.GetActiveScene().name != mainRoom.ToString())
 		        {
+			        if (this.player == null)
+			        {
+				        this.player = player.GetComponentInChildren<Player>();
+			        }
+			        
 			        EnableChat();
 			        this.player.EnableMainCanvas();
 			        //this.player.Resume();

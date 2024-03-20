@@ -476,6 +476,15 @@ public class Player : Entity
         grain.enabled.Override(true);
         ambientOcclusion.enabled.Override(true);
         motionBlur.enabled.Override(true);
+        
+        //We wait 2 seconds
+        Invoke("IncreaseVignette", 2);
+    }
+
+    private void IncreaseVignette()
+    {
+        //We put the center of vignette to 0.75
+        vignette.center.Override(new Vector2(0.75f, 0.75f));
     }
 
     private void FixedUpdate()
@@ -558,6 +567,7 @@ public class Player : Entity
 
         if (playerToKill != null)
         {
+            Debug.Log("Player to kill: " + playerToKill);
             PV.RPC("AnimateHit", playerToKill.Controller);
         }
         
@@ -747,6 +757,24 @@ public class Player : Entity
                 if (Input.GetKeyDown(KeyCode.Q))
                 {
                     hit.collider.gameObject.GetComponent<Chess>().Open();
+                }
+            }
+            else if (hit.collider.gameObject.CompareTag("Interruptor"))
+            {
+                Over("Q", "Press to activate interruptor");
+                
+                if (Input.GetKeyDown(KeyCode.Q))
+                {
+                    hit.collider.gameObject.GetComponent<Interruptor>().OnClick();
+                }
+            }
+            else if (hit.collider.gameObject.CompareTag("Final Door"))
+            {
+                Over("Q", "Press to leave the maze");
+                
+                if (Input.GetKeyDown(KeyCode.Q))
+                {
+                    hit.collider.gameObject.GetComponent<ExitDoorHorrorMaze>().Exit(this);
                 }
             }
             else
@@ -1167,6 +1195,6 @@ public class Player : Entity
     
     public void IncreaseSprintSpeed()
     {
-        Character.SprintSpeed = Character.SprintSpeed * 2;
+        Character.SprintSpeed *= 1.5f;
     }
 }
