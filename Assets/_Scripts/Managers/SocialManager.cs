@@ -89,6 +89,8 @@ public class SocialManager : MonoBehaviour
                 { "userID", id},
                 { "token", "patata" }
             },
+            ConnectionTimeout = TimeSpan.FromSeconds(5),
+            ReconnectionAttempts = 3,
             EIO = 4,
             Transport = SocketIOClient.Transport.TransportProtocol.WebSocket
         });

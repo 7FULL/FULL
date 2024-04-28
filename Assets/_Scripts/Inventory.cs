@@ -7,6 +7,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 [RequireComponent(typeof(PhotonView))]
 public class Inventory : MenuUtils
@@ -205,16 +206,19 @@ public class Inventory : MenuUtils
             
             foreach (string stream in streams)
             {
+                //We cut the string to get the name of the stream
+                string streamName = stream.Split("-0101-")[0];
+                
                 GameObject streamingObject = Instantiate(streamingPrefab, streamingContainer.transform);
                 StreamingDisplay streamingObjectScript = streamingObject.GetComponent<StreamingDisplay>();
-                streamingObjectScript.Configure(stream, this);
+                streamingObjectScript.Configure(streamName, this);
             }
         }));
     }
 
     private void LoadStreamInfo()
     {
-        streamingInfo.text = $"nameOfYourStream?key={GameManager.Instance.Player.StreamKey}&username={GameManager.Instance.Player.ID}";
+        streamingInfo.text = $"nameOfYourStream?key={GameManager.Instance.Player.StreamKey}-0101-{GameManager.Instance.Player.ID}&username={GameManager.Instance.Player.ID}";
     }
     
     public void RemoveItem(Item item)

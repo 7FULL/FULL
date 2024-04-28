@@ -25,6 +25,14 @@ public abstract class Item: MonoBehaviour
     [InspectorName("Is floor item")]
     private bool _isFloorColliderActive = false;
     
+    [SerializeField]
+    [InspectorName("Left hand")]
+    private Transform leftHand;
+    
+    [SerializeField]
+    [InspectorName("Right hand")]
+    private Transform rightHand;
+    
     public ItemData ItemData => _itemData;
     
     public int Quantity => _quantity;
@@ -112,6 +120,16 @@ public abstract class Item: MonoBehaviour
 
     //Use
     public abstract void Use();
+
+    public void OnEnable()
+    {
+        GameManager.Instance.Player.SetHands(leftHand, rightHand);
+    }
+
+    public void OnDisable()
+    {
+        GameManager.Instance.Player.ClearHands();
+    }
 }
 
 

@@ -7,6 +7,7 @@ using KinematicCharacterController;
 using KinematicCharacterController.Examples;
 using Photon.Pun;
 using Photon.Pun.Demo.PunBasics;
+using RootMotion.FinalIK;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
@@ -167,6 +168,18 @@ public class Player : Entity
     private bool left = true;
     
     public Recoil RecoilScript => recoilScript;
+    
+    [SerializeField]
+    [InspectorName("Left Hand")]
+    private HandPoser leftHandPoser;
+    
+    [SerializeField]
+    [InspectorName("Right Hand")]
+    private HandPoser rightHandPoser;
+    
+    [SerializeField]
+    [InspectorName("Full Body Biped IK")]
+    private FullBodyBipedIK fullBodyBipedIK;
 
     private void OnEnable()
     {
@@ -321,6 +334,8 @@ public class Player : Entity
                 uniqueIdentifier = "2";
             }
         }
+
+        uniqueIdentifier = "1";
         
         /*
         Contact contact = new Contact("Rodrigo", "2");
@@ -1196,5 +1211,47 @@ public class Player : Entity
     public void IncreaseSprintSpeed()
     {
         Character.SprintSpeed *= 1.5f;
+    }
+    
+    public void SetHands(Transform leftHand, Transform rightHand)
+    {
+        if (leftHand != null && leftHandPoser != null)
+        {
+            leftHandPoser.poseRoot = leftHand;
+            fullBodyBipedIK.solver.leftHandEffector.target = leftHand;
+            
+            fullBodyBipedIK.solver.leftHandEffector.positionWeight = 1;
+            fullBodyBipedIK.solver.leftHandEffector.rotationWeight = 1;
+        }
+        
+        if (rightHand != null && rightHandPoser != null)
+        {
+            rightHandPoser.poseRoot = rightHand;
+            fullBodyBipedIK.solver.rightHandEffector.target = rightHand;
+            
+            fullBodyBipedIK.solver.rightHandEffector.positionWeight = 1;
+            fullBodyBipedIK.solver.rightHandEffector.rotationWeight = 1;
+        }
+    }
+    
+    public void ClearHands()
+    {
+        if(leftHandPoser != null)
+        {
+            leftHandPoser.poseRoot = null;
+        }
+        
+        if(rightHandPoser != null)
+        {
+            rightHandPoser.poseRoot = null;
+        }
+        
+        fullBodyBipedIK.solver.leftHandEffector.target = null;
+        fullBodyBipedIK.solver.rightHandEffector.target = null;
+        
+        fullBodyBipedIK.solver.leftHandEffector.positionWeight = 0;
+        fullBodyBipedIK.solver.leftHandEffector.rotationWeight = 0;
+        fullBodyBipedIK.solver.rightHandEffector.positionWeight = 0;
+        fullBodyBipedIK.solver.rightHandEffector.rotationWeight = 0;
     }
 }

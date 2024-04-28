@@ -39,6 +39,8 @@ public class Gun: Item
 
     private void OnEnable()
     {
+        base.OnEnable();
+        
         if (!alreadeyInitialized)
         {
             Initialize();
